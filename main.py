@@ -37,10 +37,13 @@ def main() -> int:
     # Drop genres column from movies dataframe
     movies.drop(columns='genres', inplace=True)
 
-    movies['year'] = movies['title'].str.extract('.*\((.*)\).*', expand=False)
-    # movies['year'].astype('int32')
-
-    print(movies['year'].isna().sum()) # TODO: 322 NaN elements
+    # Save column year
+    movies['year'] = movies['title'].str.extract('.*\((\d+)\).*', expand=False)
+    # Drop all the rows that doesn't have the year in the title
+    movies.dropna(inplace=True)
+    movies['year'].astype('int32')
+    # Remove year from the title
+    movies['title'] = movies['title'].str[:-7]
 
     return 0
 
