@@ -51,7 +51,6 @@ def main() -> int:
     # Drop genres column from movies dataframe
     movies.drop(columns='genres', inplace=True)
 
-
     # Save column year
     movies['year'] = movies['title'].str.extract('.*\((\d+)\).*', expand=False)
     # Drop all the rows that doesn't have the year in the title
@@ -60,7 +59,6 @@ def main() -> int:
     # Remove year from the title
     movies['title'] = movies['title'].str[:-7]
     # ratings.drop(columns='timestamp', inplace=True)
-    mean_rating = pd.DataFrame(ratings.groupby(['movieId'])['rating'].mean())
 
     # Drop timestamp column
     tags.drop(columns='timestamp', inplace=True)
@@ -80,27 +78,27 @@ def main() -> int:
     # Drop timestamp column
     ratings.drop(columns='timestamp', inplace=True)
 
-
+    # calculate mean rate and number of rate for every movieId
+    mean_rating = pd.DataFrame(ratings.groupby(['movieId'])['rating'].mean())
     mean_rating.rename(columns={"rating": "mean_rating"}, inplace=True)
     number_rating = pd.DataFrame(ratings.groupby(['movieId']).count())
     number_rating.drop(columns='rating', inplace=True)
     number_rating.rename(columns={"userId": "number_of_ratings"}, inplace=True)
     number_mean_rating = pd.merge(mean_rating, number_rating, on='movieId', how='inner')
-    # print(number_rating)
 
+    # merge the new two column with the movies dataframe
     movies = pd.merge(movies, number_mean_rating, on='movieId', how='inner')
     movies_year = movies.set_index('movieId')['year']
     one_hot_encoded = pd.get_dummies(movies_year)
 
+    # add column of missing years with 0 since the year could be seen as categorical
     for idx in range(movies['year'].min(), movies['year'].max()):
         if idx not in one_hot_encoded.columns:
             one_hot_encoded[idx] = 0
 
     movies = pd.merge(movies, one_hot_encoded, on='movieId', how='inner')
     movies = movies.drop(columns='year')
-    print(movies.columns)
 
-    # pd.rename(columns={"A": "a", "B": "c"})
     return 0
 
 
