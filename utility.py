@@ -36,7 +36,7 @@ def retrieve_csv(url: str, out_dir: str) -> bool:
         filename = os.path.basename(url)
         filepath = os.path.join(out_dir, filename)
         if not os.path.exists(filepath):
-            print('Datasets not found, start download...')
+            print(f'Some datasets missing, start download from {os.path.dirname(url)}')
             with requests.get(url, stream=True) as req:
                 total_size = int(req.headers.get('Content-Length'))
                 chunk_size = 1024
@@ -69,9 +69,11 @@ def retrieve_csv(url: str, out_dir: str) -> bool:
                             archive.extract(info, out_dir)
 
             os.remove(filepath)
-            # TODO: pretty output message
-            print(f'Following datasets saved: {extracted}')
+            print(f'Following datasets saved:')
+            for filename in extracted:
+                print(f'\t- {filename}')
     else:
         print('No needed to download datasets.')
+    print('-' * 30)
 
     return True
