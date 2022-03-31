@@ -100,8 +100,16 @@ def main() -> int:
 
         movies = pd.merge(movies, one_hot_encoded_year, on='movieId', how='inner')
         movies.drop(columns='year', inplace=True)
+    else:
+        # min-max scaling
+        movie_year = movies['year'].astype('float32')
+        year_min = movie_year.min()
+        year_max = movie_year.max()
+        movie_year -= year_min
+        movie_year /= (year_max - year_min)
+        movies['year'] = movie_year
 
-    print(movies.info())
+    print(movies['year'].min())
 
     return 0
 

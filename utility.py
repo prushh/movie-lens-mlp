@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import List
 from zipfile import ZipFile
 
 import requests
@@ -8,7 +9,7 @@ from tqdm import tqdm
 from settings import csv_names
 
 
-def missing_files(path: str, filenames: list[str]) -> bool:
+def missing_files(path: str, filenames: List[str]) -> bool:
     """
     Check if all file specified inside filenames list exists.
     :param path: the folder to work in
