@@ -1,5 +1,6 @@
 import os
 import sys
+from typing import List
 from zipfile import ZipFile
 
 import requests
@@ -9,7 +10,11 @@ from tqdm import tqdm
 from settings import csv_names
 
 
-def missing_files(path: str, filenames: list[str]) -> bool:
+def contains_number(value):
+    return any([char.isdigit() for char in value])
+
+
+def missing_files(path: str, filenames: List[str]) -> bool:
     """
     Check if all file specified inside filenames list exists.
     :param path: the folder to work in
@@ -90,6 +95,10 @@ def fill_budget_revenue(url: str):
     p_list = soup.findAll('section', attrs={'class': ['facts', 'left_column']})[0].select('p')
     budget = p_list[-2:-1][0].getText().split('$')[-1].replace(',', '')
     revenue = p_list[-1].getText().split('$')[-1].replace(',', '')
+    if contains_number(budget):
+        print(f'budget:{float(budget)}')
+    else:
+        print(0)
+    if contains_number(revenue):
+        print(f'revenue:{float(revenue)}')
 
-    print(float(budget))
-    print(float(revenue))
