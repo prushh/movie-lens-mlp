@@ -13,3 +13,4 @@ csv_names = [
 ]
 
 YEAR_ENCODING = False
+LINKS_FLAG = False

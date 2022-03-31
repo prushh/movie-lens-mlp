@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
 
-from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING, TMDB_URL
+from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING, TMDB_URL, LINKS_FLAG
 from utility import retrieve_csv, fill_budget_revenue
 
 
@@ -107,17 +107,20 @@ def main() -> int:
     movies_links = pd.merge(movies['movieId'], links, on='movieId', how='left')
     movies_links.dropna(inplace=True)
 
-    net_value = pd.DataFrame()
-    for (movie_id, _, tmdb_id) in movies_links.itertuples(name='Links', index=False):
-        url = os.path.join(TMDB_URL, str(tmdb_id))
-        net_value = pd.concat(
-            [
-                net_value,
-                fill_budget_revenue(url, movie_id, tmdb_id)
-            ],
-            ignore_index=True)
+    if LINKS_FLAG:
+        net_value = pd.DataFrame()
+        for (movie_id, _, tmdb_id) in movies_links.itertuples(name='Links', index=False):
+            url = os.path.join(TMDB_URL, str(tmdb_id))
+            net_value = pd.concat(
+                [
+                    net_value,
+                    fill_budget_revenue(url, movie_id, tmdb_id)
+                ],
+                ignore_index=True)
+            print(net_value)
 
-        net_value.to_csv('datasets/net-value.csv', encoding='utf-8')
+        net_value_path = os.path.join(DATASETS_DIR, 'net-value.csv')
+        net_value.to_csv(net_value_path, index=False, encoding='utf-8')
 
     return 0
 
