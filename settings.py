@@ -1,4 +1,5 @@
 MOVIE_LENS_URL = 'https://files.grouplens.org/datasets/movielens/ml-latest.zip'
+TMDB_URL = 'https://www.themoviedb.org/movie/'
 
 DATASETS_DIR = 'datasets'
 

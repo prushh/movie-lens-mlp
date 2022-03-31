@@ -3,8 +3,8 @@ import os
 import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
 
-from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING
-from utility import retrieve_csv
+from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING, TMDB_URL
+from utility import retrieve_csv, fill_budget_revenue
 
 
 def overview(dir_path: str):
@@ -34,6 +34,11 @@ def main() -> int:
     ratings = pd.read_csv('datasets/ratings.csv', encoding='utf-8')
     genome_tags = pd.read_csv('datasets/genome-tags.csv', encoding='utf-8')
     genome_scores = pd.read_csv('datasets/genome-scores.csv', encoding='utf-8')
+
+    for tmdb in links['tmdbId']:
+        url = os.path.join(TMDB_URL, str(tmdb))
+        fill_budget_revenue(url)
+    exit(1)
 
     # Create column year from title
     movies['year'] = movies['title'].str.extract('.*\((\d+)\).*', expand=False)

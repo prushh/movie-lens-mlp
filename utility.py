@@ -3,6 +3,7 @@ import sys
 from zipfile import ZipFile
 
 import requests
+from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from settings import csv_names
@@ -77,3 +78,18 @@ def retrieve_csv(url: str, out_dir: str) -> bool:
     print('-' * 30)
 
     return True
+
+
+def fill_budget_revenue(url: str):
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36'
+    }
+    page = requests.get(url, headers=headers)
+    soup = BeautifulSoup(page.content, 'html.parser')
+
+    p_list = soup.findAll('section', attrs={'class': ['facts', 'left_column']})[0].select('p')
+    budget = p_list[-2:-1][0].getText().split('$')[-1].replace(',', '')
+    revenue = p_list[-1].getText().split('$')[-1].replace(',', '')
+
+    print(float(budget))
+    print(float(revenue))
