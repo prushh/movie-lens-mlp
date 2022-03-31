@@ -1,4 +1,5 @@
-DATASETS_URL = 'https://files.grouplens.org/datasets/movielens/ml-latest.zip'
+MOVIE_LENS_URL = 'https://files.grouplens.org/datasets/movielens/ml-latest.zip'
+
 DATASETS_DIR = 'datasets'
 
 csv_names = [
@@ -9,3 +10,5 @@ csv_names = [
     'ratings.csv',
     'tags.csv'
 ]
+
+YEAR_ENCODING = False
