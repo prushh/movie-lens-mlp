@@ -35,11 +35,6 @@ def main() -> int:
     genome_tags = pd.read_csv('datasets/genome-tags.csv', encoding='utf-8')
     genome_scores = pd.read_csv('datasets/genome-scores.csv', encoding='utf-8')
 
-    for tmdb in links['tmdbId']:
-        url = os.path.join(TMDB_URL, str(tmdb))
-        fill_budget_revenue(url)
-    exit(1)
-
     # Create column year from title
     movies['year'] = movies['title'].str.extract('.*\((\d+)\).*', expand=False)
     # Drop all the rows that doesn't have the year in the title
@@ -106,7 +101,23 @@ def main() -> int:
         movies = pd.merge(movies, one_hot_encoded_year, on='movieId', how='inner')
         movies.drop(columns='year', inplace=True)
 
-    print(movies.info())
+    movies = pd.merge(movies, links, on='movieId', how='left')
+    movies.dropna(inplace=True)
+
+    movies_links = pd.merge(movies['movieId'], links, on='movieId', how='left')
+    movies_links.dropna(inplace=True)
+
+    net_value = pd.DataFrame()
+    for (movie_id, _, tmdb_id) in movies_links.itertuples(name='Links', index=False):
+        url = os.path.join(TMDB_URL, str(tmdb_id))
+        net_value = pd.concat(
+            [
+                net_value,
+                fill_budget_revenue(url, movie_id, tmdb_id)
+            ],
+            ignore_index=True)
+
+        net_value.to_csv('datasets/net-value.csv', encoding='utf-8')
 
     return 0
 

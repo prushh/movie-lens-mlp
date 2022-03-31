@@ -3,15 +3,12 @@ import sys
 from typing import List
 from zipfile import ZipFile
 
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from settings import csv_names
-
-
-def contains_number(value):
-    return any([char.isdigit() for char in value])
 
 
 def missing_files(path: str, filenames: List[str]) -> bool:
@@ -85,7 +82,11 @@ def retrieve_csv(url: str, out_dir: str) -> bool:
     return True
 
 
-def fill_budget_revenue(url: str):
+def contains_number(value):
+    return any([char.isdigit() for char in value])
+
+
+def fill_budget_revenue(url: str, movie_id: int, tmdb_id: float) -> pd.DataFrame:
     headers = {
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36'
     }
@@ -96,9 +97,17 @@ def fill_budget_revenue(url: str):
     budget = p_list[-2:-1][0].getText().split('$')[-1].replace(',', '')
     revenue = p_list[-1].getText().split('$')[-1].replace(',', '')
     if contains_number(budget):
-        print(f'budget:{float(budget)}')
+        budget = float(budget)
     else:
-        print(0)
+        budget = 0
     if contains_number(revenue):
-        print(f'revenue:{float(revenue)}')
+        revenue = float(revenue)
+    else:
+        revenue = 0
 
+    return pd.DataFrame({
+        'movieId': [movie_id],
+        'tmdbId': [tmdb_id],
+        'budget': [budget],
+        'revenue': [revenue]
+    })
