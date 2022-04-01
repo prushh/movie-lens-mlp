@@ -8,7 +8,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from settings import csv_names
+from settings import raw_csv_names
 
 
 def missing_files(path: str, filenames: List[str]) -> bool:
@@ -49,7 +49,7 @@ def retrieve_csv(url: str, out_dir: str) -> bool:
     :param out_dir: the folder in which to save the csv files
     :return: False if something went wrong during the download, True instead
     """
-    to_download = missing_files(out_dir, csv_names)
+    to_download = missing_files(out_dir, raw_csv_names)
 
     if to_download:
         # At least one csv file missing, download zip
@@ -106,25 +106,26 @@ def retrieve_csv(url: str, out_dir: str) -> bool:
     return True
 
 
-def request_features_tmdb(url: str, movie_id: int, tmdb_id: float, features: set) -> pd.DataFrame:
+def request_features_tmdb(url: str, movie_id: int, tmdb_id: float) -> pd.DataFrame:
     """
     Query the TMDB Api to retrieve more features (budget, revenue, runtime, etc.).
     :param url: the web URI to query the TMDB Api
     :param movie_id: the index of a film from MovieLens
     :param tmdb_id: the index of a film from TMDB
-    :param features: the set of features to extract from the JSON response
     :return: DataFrame with a single sample
     """
     response = requests.get(url)
     status_code = response.status_code
 
-    budget, revenue, runtime = 0, 0, 0
+    adult, budget, revenue, runtime = False, 0, 0, 0
 
     # 200 = OK
     if status_code == 200:
         json_response = response.json()
         keys = json_response.keys()
+        features = {'adult', 'budget', 'revenue', 'runtime'}
         if features.issubset(set(keys)):
+            adult = json_response['adult']
             budget = json_response['budget']
             revenue = json_response['revenue']
             runtime = json_response['runtime']
@@ -132,6 +133,7 @@ def request_features_tmdb(url: str, movie_id: int, tmdb_id: float, features: set
     return pd.DataFrame({
         'movieId': [movie_id],
         'tmdbId': [tmdb_id],
+        'adult': [adult],
         'budget': [budget],
         'revenue': [revenue],
         'runtime': [runtime]

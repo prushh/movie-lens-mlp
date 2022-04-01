@@ -6,13 +6,24 @@ TMDB_API_URL = Template('https://api.themoviedb.org/3/movie/${tmdb_id}?api_key=$
 
 DATASETS_DIR = 'datasets'
 
-csv_names = [
+folders_name = [
+    'external',
+    'interim',
+    'processed',
+    'raw'
+]
+
+raw_csv_names = [
     'genome-scores.csv',
     'genome-tags.csv',
     'links.csv',
     'movies.csv',
     'ratings.csv',
     'tags.csv'
+]
+
+external_csv_names = [
+    'tmdb-features.csv'
 ]
 
 YEAR_ENCODING = False
