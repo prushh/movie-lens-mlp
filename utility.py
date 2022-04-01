@@ -3,7 +3,9 @@ import sys
 from typing import List
 from zipfile import ZipFile
 
+import pandas as pd
 import requests
+from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from settings import csv_names
@@ -78,3 +80,58 @@ def retrieve_csv(url: str, out_dir: str) -> bool:
     print('-' * 30)
 
     return True
+
+
+def contains_number(value):
+    return any([char.isdigit() for char in value])
+
+
+def fill_budget_revenue(url: str, movie_id: int, tmdb_id: float) -> pd.DataFrame:
+    headers = {
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36'
+    }
+    page = requests.get(url, headers=headers)
+    soup = BeautifulSoup(page.content, 'html.parser')
+
+    p_list = soup.findAll('section', attrs={'class': ['facts', 'left_column']})[0].select('p')
+    budget = p_list[-2:-1][0].getText().split('$')[-1].replace(',', '')
+    revenue = p_list[-1].getText().split('$')[-1].replace(',', '')
+    if contains_number(budget):
+        budget = float(budget)
+    else:
+        budget = 0
+    if contains_number(revenue):
+        revenue = float(revenue)
+    else:
+        revenue = 0
+
+    return pd.DataFrame({
+        'movieId': [movie_id],
+        'tmdbId': [tmdb_id],
+        'budget': [budget],
+        'revenue': [revenue]
+    })
+
+
+def request_features_tmdb(url: str, movie_id: int, tmdb_id: float) -> pd.DataFrame:
+    response = requests.get(url)
+    status_code = response.status_code
+
+    budget, revenue, runtime = 0, 0, 0
+
+    if status_code == 200:
+        json_response = response.json()
+        keys = json_response.keys()
+        interest_features = {'budget', 'revenue', 'runtime'}
+        if interest_features.issubset(set(keys)):
+            budget = json_response['budget']
+            revenue = json_response['revenue']
+            runtime = json_response['runtime']
+
+    return pd.DataFrame({
+        'movieId': [movie_id],
+        'tmdbId': [tmdb_id],
+        'budget': [budget],
+        'revenue': [revenue],
+        'runtime': [runtime]
+    })

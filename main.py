@@ -1,10 +1,11 @@
 import os
 
 import pandas as pd
+from dotenv import load_dotenv
 from sklearn.preprocessing import MultiLabelBinarizer
 
-from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING
-from utility import retrieve_csv
+from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING, LINKS_FLAG, TMDB_API_URL
+from utility import retrieve_csv, request_features_tmdb
 
 
 def overview(dir_path: str):
@@ -36,7 +37,7 @@ def main() -> int:
     genome_scores = pd.read_csv('datasets/genome-scores.csv', encoding='utf-8')
 
     # Create column year from title
-    movies['year'] = movies['title'].str.extract('.*\((\d+)\).*', expand=False)
+    movies['year'] = movies['title'].str.extract('.*\((\d{4})\).*', expand=False)
     # Drop all the rows that doesn't have the year in the title
     movies.dropna(inplace=True)
 
@@ -109,7 +110,21 @@ def main() -> int:
         movie_year /= (year_max - year_min)
         movies['year'] = movie_year
 
-    print(movies['year'].min())
+    if LINKS_FLAG:
+        load_dotenv()
+        token = os.environ.get('TMDB_API_KEY')
+
+        net_value = pd.DataFrame()
+        for (movie_id, _, tmdb_id) in links.itertuples(name='Links', index=False):
+            url = TMDB_API_URL.substitute(tmdb_id=tmdb_id, api_key=token)
+            sample = request_features_tmdb(url, movie_id, tmdb_id)
+            net_value = pd.concat([net_value, sample], ignore_index=True)
+            print(sample)
+            print(f'shape: {net_value.shape[0]}')
+
+        net_value_path = os.path.join(DATASETS_DIR, 'tmdb-features.csv')
+        net_value.to_csv(net_value_path, index=False, encoding='utf-8')
+
 
     return 0
 
