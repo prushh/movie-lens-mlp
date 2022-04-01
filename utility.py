@@ -111,3 +111,27 @@ def fill_budget_revenue(url: str, movie_id: int, tmdb_id: float) -> pd.DataFrame
         'budget': [budget],
         'revenue': [revenue]
     })
+
+
+def request_features_tmdb(url: str, movie_id: int, tmdb_id: float) -> pd.DataFrame:
+    response = requests.get(url)
+    status_code = response.status_code
+
+    budget, revenue, runtime = 0, 0, 0
+
+    if status_code == 200:
+        json_response = response.json()
+        keys = json_response.keys()
+        interest_features = {'budget', 'revenue', 'runtime'}
+        if interest_features.issubset(set(keys)):
+            budget = json_response['budget']
+            revenue = json_response['revenue']
+            runtime = json_response['runtime']
+
+    return pd.DataFrame({
+        'movieId': [movie_id],
+        'tmdbId': [tmdb_id],
+        'budget': [budget],
+        'revenue': [revenue],
+        'runtime': [runtime]
+    })

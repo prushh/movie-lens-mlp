@@ -1,10 +1,11 @@
 import os
 
 import pandas as pd
+from dotenv import load_dotenv
 from sklearn.preprocessing import MultiLabelBinarizer
 
-from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING, TMDB_URL, LINKS_FLAG
-from utility import retrieve_csv, fill_budget_revenue
+from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING, LINKS_FLAG, TMDB_API_URL
+from utility import retrieve_csv, request_features_tmdb
 
 
 def overview(dir_path: str):
@@ -36,7 +37,7 @@ def main() -> int:
     genome_scores = pd.read_csv('datasets/genome-scores.csv', encoding='utf-8')
 
     # Create column year from title
-    movies['year'] = movies['title'].str.extract('.*\((\d+)\).*', expand=False)
+    movies['year'] = movies['title'].str.extract('.*\((\d{4})\).*', expand=False)
     # Drop all the rows that doesn't have the year in the title
     movies.dropna(inplace=True)
 
@@ -66,6 +67,9 @@ def main() -> int:
             .count()
             .rename(columns={'tag': 'tag_count'})
     )
+    print(movies_tags.info())
+    print(movies_tags_count.info())
+    exit(1)
     movies = pd.merge(movies, movies_tags_count, on='movieId', how='inner')
 
     # Drop timestamp and userId column
@@ -101,25 +105,19 @@ def main() -> int:
         movies = pd.merge(movies, one_hot_encoded_year, on='movieId', how='inner')
         movies.drop(columns='year', inplace=True)
 
-    movies = pd.merge(movies, links, on='movieId', how='left')
-    movies.dropna(inplace=True)
-
-    movies_links = pd.merge(movies['movieId'], links, on='movieId', how='left')
-    movies_links.dropna(inplace=True)
-
     if LINKS_FLAG:
-        net_value = pd.DataFrame()
-        for (movie_id, _, tmdb_id) in movies_links.itertuples(name='Links', index=False):
-            url = os.path.join(TMDB_URL, str(tmdb_id))
-            net_value = pd.concat(
-                [
-                    net_value,
-                    fill_budget_revenue(url, movie_id, tmdb_id)
-                ],
-                ignore_index=True)
-            print(net_value)
+        load_dotenv()
+        token = os.environ.get('TMDB_API_KEY')
 
-        net_value_path = os.path.join(DATASETS_DIR, 'net-value.csv')
+        net_value = pd.DataFrame()
+        for (movie_id, _, tmdb_id) in links.itertuples(name='Links', index=False):
+            url = TMDB_API_URL.substitute(tmdb_id=tmdb_id, api_key=token)
+            sample = request_features_tmdb(url, movie_id, tmdb_id)
+            net_value = pd.concat([net_value, sample], ignore_index=True)
+            print(sample)
+            print(f'shape: {net_value.shape[0]}')
+
+        net_value_path = os.path.join(DATASETS_DIR, 'tmdb-features.csv')
         net_value.to_csv(net_value_path, index=False, encoding='utf-8')
 
     return 0
