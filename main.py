@@ -67,9 +67,6 @@ def main() -> int:
             .count()
             .rename(columns={'tag': 'tag_count'})
     )
-    print(movies_tags.info())
-    print(movies_tags_count.info())
-    exit(1)
     movies = pd.merge(movies, movies_tags_count, on='movieId', how='inner')
 
     # Drop timestamp and userId column
@@ -104,6 +101,14 @@ def main() -> int:
 
         movies = pd.merge(movies, one_hot_encoded_year, on='movieId', how='inner')
         movies.drop(columns='year', inplace=True)
+    else:
+        # min-max scaling
+        movie_year = movies['year'].astype('float32')
+        year_min = movie_year.min()
+        year_max = movie_year.max()
+        movie_year -= year_min
+        movie_year /= (year_max - year_min)
+        movies['year'] = movie_year
 
     if LINKS_FLAG:
         load_dotenv()
@@ -119,6 +124,7 @@ def main() -> int:
 
         net_value_path = os.path.join(DATASETS_DIR, 'tmdb-features.csv')
         net_value.to_csv(net_value_path, index=False, encoding='utf-8')
+
 
     return 0
 
