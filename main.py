@@ -1,7 +1,10 @@
 import os
 
+import numpy as np
 import pandas as pd
+import seaborn as sns
 from dotenv import load_dotenv
+from matplotlib import pyplot as plt
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING, LINKS_FLAG, TMDB_API_URL
@@ -38,8 +41,36 @@ def main() -> int:
 
     # Create column year from title
     movies['year'] = movies['title'].str.extract('.*\((\d{4})\).*', expand=False)
+    # Create column year from title
+    movies['year'] = movies['title'].str.extract('.*\((\d{4})\).*', expand=True)
+
+    # Saving the old dataframe with years to recover all the data since are missing few values
+    movies_all_year = movies
+
     # Drop all the rows that doesn't have the year in the title
-    movies.dropna(inplace=True)
+
+    # Histogram distribution year
+    years_to_plot = movies['year'] \
+        .dropna() \
+        .astype('int32') \
+        .to_numpy()
+
+    # Plot istance
+    plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
+    plt.figure(figsize=(10, 7), dpi=80)
+    sns.histplot(
+        data=years_to_plot,
+        bins=25,
+        kde=True,
+        line_kws={"linewidth": 3})
+    plt.gca().set(title='Frequency Histogram', ylabel='Number of films', xlabel='Year')
+    plt.show()
+
+    # Save the number of filled values with the median since it is a skewed distribution
+    median_year = np.median(years_to_plot)
+    number_of_filled_values = movies_all_year[movies_all_year["year"].isna()].shape[0]
+    # Filling data missing
+    movies_all_year['year'].fillna(median_year)
 
     # Create column title_length from title
     movies['title_length'] = movies['title'].str.len()
