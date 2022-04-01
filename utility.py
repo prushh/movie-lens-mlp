@@ -1,3 +1,4 @@
+import gzip
 import os
 import sys
 from typing import List
@@ -5,7 +6,6 @@ from zipfile import ZipFile
 
 import pandas as pd
 import requests
-from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 from settings import csv_names
@@ -25,9 +25,26 @@ def missing_files(path: str, filenames: List[str]) -> bool:
     return False
 
 
+def gunzip(src_filepath: str, dest_filepath: str, block_size: int = 65536) -> None:
+    with gzip.open(src_filepath, 'rb') as s_file, open(dest_filepath, 'wb') as d_file:
+        while True:
+            block = s_file.read(block_size)
+            if not block:
+                break
+            else:
+                d_file.write(block)
+
+
+def tsv_to_csv(filepath: str):
+    df = pd.read_csv(filepath, sep='\t', encoding='utf-8', dtype='object')
+    path_no_ext = os.path.splitext(filepath)[0].replace('.', '-')
+    os.remove(filepath)
+    df.to_csv(f'{path_no_ext}.csv', sep=',', index=False, encoding='utf-8')
+
+
 def retrieve_csv(url: str, out_dir: str) -> bool:
     """
-    Retrieve the zip file containing the csv files if necessary and save them in local.
+    Retrieve the zip/gz file containing the csv files if necessary and save them in local.
     :param url: the web URI to download the datasets
     :param out_dir: the folder in which to save the csv files
     :return: False if something went wrong during the download, True instead
@@ -61,15 +78,22 @@ def retrieve_csv(url: str, out_dir: str) -> bool:
                 return False
 
             extracted = []
-            # Open file zip and extract csv files inside out_dir
-            with ZipFile(filepath, 'r') as archive:
-                for info in archive.infolist():
-                    info.filename = os.path.basename(info.filename)
-                    if info.filename != '':
-                        ext = os.path.splitext(info.filename)[-1].lower()
-                        if ext == '.csv':
-                            extracted.append(info.filename)
-                            archive.extract(info, out_dir)
+            ext_archive = os.path.splitext(filepath)[-1].lower()
+            if ext_archive == '.zip':
+                # TODO: make function for zip decompression
+                # Open file zip and extract csv files inside out_dir
+                with ZipFile(filepath, 'r') as archive:
+                    for info in archive.infolist():
+                        info.filename = os.path.basename(info.filename)
+                        if info.filename != '':
+                            ext = os.path.splitext(info.filename)[-1].lower()
+                            if ext == '.csv':
+                                extracted.append(info.filename)
+                                archive.extract(info, out_dir)
+            elif ext_archive == '.gz':
+                dest_filepath = os.path.splitext(filepath)[0]
+                gunzip(filepath, dest_filepath)
+                tsv_to_csv(dest_filepath)
 
             os.remove(filepath)
             print(f'Following datasets saved:')
@@ -82,48 +106,25 @@ def retrieve_csv(url: str, out_dir: str) -> bool:
     return True
 
 
-def contains_number(value):
-    return any([char.isdigit() for char in value])
-
-
-def fill_budget_revenue(url: str, movie_id: int, tmdb_id: float) -> pd.DataFrame:
-    headers = {
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.84 Safari/537.36'
-    }
-    page = requests.get(url, headers=headers)
-    soup = BeautifulSoup(page.content, 'html.parser')
-
-    p_list = soup.findAll('section', attrs={'class': ['facts', 'left_column']})[0].select('p')
-    budget = p_list[-2:-1][0].getText().split('$')[-1].replace(',', '')
-    revenue = p_list[-1].getText().split('$')[-1].replace(',', '')
-    if contains_number(budget):
-        budget = float(budget)
-    else:
-        budget = 0
-    if contains_number(revenue):
-        revenue = float(revenue)
-    else:
-        revenue = 0
-
-    return pd.DataFrame({
-        'movieId': [movie_id],
-        'tmdbId': [tmdb_id],
-        'budget': [budget],
-        'revenue': [revenue]
-    })
-
-
-def request_features_tmdb(url: str, movie_id: int, tmdb_id: float) -> pd.DataFrame:
+def request_features_tmdb(url: str, movie_id: int, tmdb_id: float, features: set) -> pd.DataFrame:
+    """
+    Query the TMDB Api to retrieve more features (budget, revenue, runtime, etc.).
+    :param url: the web URI to query the TMDB Api
+    :param movie_id: the index of a film from MovieLens
+    :param tmdb_id: the index of a film from TMDB
+    :param features: the set of features to extract from the JSON response
+    :return: DataFrame with a single sample
+    """
     response = requests.get(url)
     status_code = response.status_code
 
     budget, revenue, runtime = 0, 0, 0
 
+    # 200 = OK
     if status_code == 200:
         json_response = response.json()
         keys = json_response.keys()
-        interest_features = {'budget', 'revenue', 'runtime'}
-        if interest_features.issubset(set(keys)):
+        if features.issubset(set(keys)):
             budget = json_response['budget']
             revenue = json_response['revenue']
             runtime = json_response['runtime']

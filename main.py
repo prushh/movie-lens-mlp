@@ -115,16 +115,21 @@ def main() -> int:
         token = os.environ.get('TMDB_API_KEY')
 
         net_value = pd.DataFrame()
+        features = {'budget', 'revenue', 'runtime'}
         for (movie_id, _, tmdb_id) in links.itertuples(name='Links', index=False):
             url = TMDB_API_URL.substitute(tmdb_id=tmdb_id, api_key=token)
-            sample = request_features_tmdb(url, movie_id, tmdb_id)
+            sample = request_features_tmdb(
+                url,
+                movie_id,
+                tmdb_id,
+                features
+            )
             net_value = pd.concat([net_value, sample], ignore_index=True)
             print(sample)
             print(f'shape: {net_value.shape[0]}')
 
         net_value_path = os.path.join(DATASETS_DIR, 'tmdb-features.csv')
         net_value.to_csv(net_value_path, index=False, encoding='utf-8')
-
 
     return 0
 
