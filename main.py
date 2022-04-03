@@ -29,15 +29,66 @@ def main() -> int:
     if not retrieve_csv(MOVIE_LENS_URL, DATASETS_DIR):
         return 1
 
-    # overview(DATASETS_DIR)
+        # overview(DATASETS_DIR)
 
     # Links table never used
     movies = pd.read_csv('datasets/movies.csv', encoding='utf-8')
-    links = pd.read_csv('datasets/links.csv', encoding='utf-8')
+    links = pd.read_csv('datasets/links.csv', encoding='utf-8', dtype={'imdbId': 'string'})
     tags = pd.read_csv('datasets/tags.csv', encoding='utf-8')
     ratings = pd.read_csv('datasets/ratings.csv', encoding='utf-8')
     genome_tags = pd.read_csv('datasets/genome-tags.csv', encoding='utf-8')
     genome_scores = pd.read_csv('datasets/genome-scores.csv', encoding='utf-8')
+    tmdb = pd.read_csv('datasets/tmdb-features.csv', encoding='utf-8')
+    imdb = pd.read_csv('datasets/title-basics.csv', encoding='utf-8', low_memory=False)
+
+    # tmdb data fill from imdb and cleaning
+    missing_runtime = tmdb[(tmdb['runtime'] == 0) | (tmdb['runtime'].isna())].copy()
+
+    # Drop from the tmdb all the rows that are nan since are saved in missing_runtime
+    tmdb.set_index('movieId', inplace=True)
+    tmdb.drop(index=missing_runtime['movieId'], inplace=True)
+
+    # Gathering runtime from IMDB thanks to tconst
+    link_missing_runtime = pd.merge(missing_runtime['movieId'], links, on='movieId', how='left')
+    link_missing_runtime.drop(columns='tmdbId', inplace=True)
+    link_missing_runtime.rename(columns={'imdbId': 'tconst'}, inplace=True)
+    link_missing_runtime['tconst'] = link_missing_runtime['tconst'].apply(lambda x: f"tt{x}")
+    imdb.rename(columns={'runtimeMinutes': 'runtime'}, inplace=True)
+    imdb_movieid = pd.merge(link_missing_runtime, imdb, on='tconst', how='left')
+
+    # Removing '\\N' and other wrong values from the runtime column
+    imdb_movieid['runtime'].replace(regex='([\\]*[a-zA-Z|\-]+)', value=np.nan, inplace=True)
+    imdb_movieid['runtime'] = imdb_movieid['runtime'].astype('float32')
+
+    # Merging the gathered runtime with the missing_runtime dataframe
+    imdb_movieid = imdb_movieid[['movieId', 'runtime']]
+    missing_runtime.drop(columns='runtime', inplace=True)
+    missing_runtime = pd.merge(missing_runtime, imdb_movieid, on='movieId', how='inner')
+    # Merge the missing_runtime with the gathered values to the tmdb dataset
+    tmdb.reset_index(inplace=True)
+    tmdb = tmdb.rename(columns={'index': 'movieId'})
+    tmdb = pd.concat([tmdb, missing_runtime])
+
+    # Now are missing only 102 runtime
+
+    # Histogram distribution year
+    runtime_to_plot = tmdb['runtime'] \
+        .dropna() \
+        .astype('int32') \
+        .to_numpy()
+
+    # Plot istance
+    plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
+    plt.figure(figsize=(10, 7), dpi=80)
+    sns.histplot(
+        data=runtime_to_plot,
+        bins=25,
+        kde=True,
+        line_kws={"linewidth": 3})
+    plt.gca().set(title='Frequency Histogram', ylabel='Number of films', xlabel='Duration in minutes')
+    plt.show()
+    median_runtime = np.median(runtime_to_plot)
+    tmdb['runtime'].fillna(median_runtime, inplace=True)
 
     # Create column year from title
     movies['year'] = movies['title'].str.extract('.*\((\d{4})\).*', expand=False)
@@ -50,7 +101,7 @@ def main() -> int:
     # Drop all the rows that doesn't have the year in the title
 
     # Histogram distribution year
-    years_to_plot = movies['year'] \
+    year_to_plot = movies['year'] \
         .dropna() \
         .astype('int32') \
         .to_numpy()
@@ -59,7 +110,7 @@ def main() -> int:
     plt.rcParams.update({'figure.figsize': (7, 5), 'figure.dpi': 100})
     plt.figure(figsize=(10, 7), dpi=80)
     sns.histplot(
-        data=years_to_plot,
+        data=year_to_plot,
         bins=25,
         kde=True,
         line_kws={"linewidth": 3})
@@ -67,7 +118,7 @@ def main() -> int:
     plt.show()
 
     # Save the number of filled values with the median since it is a skewed distribution
-    median_year = np.median(years_to_plot)
+    median_year = np.median(runtime_to_plot)
     number_of_filled_values = movies_all_year[movies_all_year["year"].isna()].shape[0]
     # Filling data missing
     movies_all_year['year'].fillna(median_year)
