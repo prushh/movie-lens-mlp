@@ -1,8 +1,8 @@
 from string import Template
 
 MOVIE_LENS_URL = 'https://files.grouplens.org/datasets/movielens/ml-latest.zip'
-TMDB_URL = 'https://www.themoviedb.org/movie/'
 TMDB_API_URL = Template('https://api.themoviedb.org/3/movie/${tmdb_id}?api_key=${api_key}')
+IMDB_URL = 'https://datasets.imdbws.com/'
 
 DATASETS_DIR = 'datasets'
 
@@ -20,6 +20,11 @@ raw_csv_names = [
     'movies.csv',
     'ratings.csv',
     'tags.csv'
+]
+
+external_tsv_names = [
+    'title.basics.tsv.gz',
+    'name.basics.tsv.gz'
 ]
 
 external_csv_names = [

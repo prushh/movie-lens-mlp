@@ -1,12 +1,11 @@
 import os
 
 import pandas as pd
-from dotenv import load_dotenv
 from sklearn.preprocessing import MultiLabelBinarizer
 
-from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING, LINKS_FLAG, TMDB_API_URL, folders_name, \
-    external_csv_names
-from utility import retrieve_csv, request_features_tmdb, missing_files
+from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING, folders_name, external_csv_names, \
+    raw_csv_names, IMDB_URL, external_tsv_names
+from utility import retrieve_tmdb, retrieve_movie_lens, retrieve_imdb
 
 
 def overview(dir_path: str):
@@ -20,26 +19,6 @@ def overview(dir_path: str):
             print(f'Columns: {df.columns}', end='\n\n')
 
 
-def external_csv(df: pd.DataFrame, out_dir: str, filename: str = 'tmdb-features.csv'):
-    load_dotenv()
-    token = os.environ.get('TMDB_API_KEY')
-
-    tmdb_features = pd.DataFrame()
-    for (movie_id, _, tmdb_id) in df.itertuples(name='Links', index=False):
-        url = TMDB_API_URL.substitute(tmdb_id=tmdb_id, api_key=token)
-        sample = request_features_tmdb(
-            url,
-            movie_id,
-            tmdb_id
-        )
-        tmdb_features = pd.concat([tmdb_features, sample], ignore_index=True)
-        print(sample)
-        print(f'shape: {tmdb_features.shape[0]}')
-
-    tmdb_features_path = os.path.join(out_dir, filename)
-    tmdb_features.to_csv(tmdb_features_path, index=False, encoding='utf-8')
-
-
 def main() -> int:
     if not os.path.exists(DATASETS_DIR):
         os.mkdir(DATASETS_DIR)
@@ -50,7 +29,7 @@ def main() -> int:
             os.mkdir(folder_path)
 
     raw_path = os.path.join(DATASETS_DIR, 'raw')
-    if not retrieve_csv(MOVIE_LENS_URL, raw_path):
+    if not retrieve_movie_lens(MOVIE_LENS_URL, raw_path, raw_csv_names):
         return 1
 
     movies = pd.read_csv(os.path.join(raw_path, 'movies.csv'), encoding='utf-8')
@@ -59,10 +38,17 @@ def main() -> int:
     ratings = pd.read_csv(os.path.join(raw_path, 'ratings.csv'), encoding='utf-8')
 
     external_path = os.path.join(DATASETS_DIR, 'external')
-    if missing_files(external_path, external_csv_names):
-        external_csv(links, external_path)
+    features = {'budget', 'revenue', 'adult'}
+    if not retrieve_tmdb(links, external_path, external_csv_names, features):
+        return 1
 
-    # TODO: retrieve IMDB csv?
+    if not retrieve_imdb(IMDB_URL, external_path, external_tsv_names):
+        return 1
+
+    exit(1)
+    # All files retrieved
+
+    tmdb_features = pd.read_csv(os.path.join(external_path, 'tmdb-features.csv'), encoding='utf-8')
 
     # overview(DATASETS_DIR)
 
@@ -139,27 +125,6 @@ def main() -> int:
         movie_year -= year_min
         movie_year /= (year_max - year_min)
         movies['year'] = movie_year
-
-    if LINKS_FLAG:
-        load_dotenv()
-        token = os.environ.get('TMDB_API_KEY')
-
-        net_value = pd.DataFrame()
-        features = {'budget', 'revenue', 'runtime'}
-        for (movie_id, _, tmdb_id) in links.itertuples(name='Links', index=False):
-            url = TMDB_API_URL.substitute(tmdb_id=tmdb_id, api_key=token)
-            sample = request_features_tmdb(
-                url,
-                movie_id,
-                tmdb_id,
-                features
-            )
-            net_value = pd.concat([net_value, sample], ignore_index=True)
-            print(sample)
-            print(f'shape: {net_value.shape[0]}')
-
-        net_value_path = os.path.join(DATASETS_DIR, 'tmdb-features.csv')
-        net_value.to_csv(net_value_path, index=False, encoding='utf-8')
 
     return 0
 
