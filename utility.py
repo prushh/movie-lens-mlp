@@ -8,7 +8,7 @@ import pandas as pd
 import requests
 from tqdm import tqdm
 
-from settings import csv_names
+from settings import raw_csv_names
 
 
 def missing_files(path: str, filenames: List[str]) -> bool:
@@ -49,7 +49,7 @@ def retrieve_csv(url: str, out_dir: str) -> bool:
     :param out_dir: the folder in which to save the csv files
     :return: False if something went wrong during the download, True instead
     """
-    to_download = missing_files(out_dir, csv_names)
+    to_download = missing_files(out_dir, raw_csv_names)
 
     if to_download:
         # At least one csv file missing, download zip
