@@ -1,3 +1,4 @@
+import os.path
 from string import Template
 
 MOVIE_LENS_URL = 'https://files.grouplens.org/datasets/movielens/ml-latest.zip'
@@ -27,7 +28,7 @@ external_tsv_names = [
 ]
 
 external_imdb_csv_names = [
-    'title-basics.csv'
+    f"{os.path.splitext(os.path.splitext(filename)[0])[0].replace('.', '-')}.csv" for filename in external_tsv_names
 ]
 
 external_tmdb_csv_names = [
