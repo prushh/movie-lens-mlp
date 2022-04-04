@@ -49,7 +49,7 @@ def get_missing_files(path: str, filenames: List[str]) -> List[str]:
     for filename in filenames:
         filepath = os.path.join(path, filename)
         if not os.path.exists(filepath):
-            missing.append(filename)
+            missing.append(filepath)
     return missing
 
 
