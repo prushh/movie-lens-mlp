@@ -47,7 +47,9 @@ def get_missing_files(path: str, filenames: List[str]) -> List[str]:
     """
     missing = []
     for filename in filenames:
-        filepath = os.path.join(path, filename)
+        base_tsv = os.path.splitext(filename)[0]
+        base = os.path.splitext(base_tsv)[0].replace('.', '-')
+        filepath = os.path.join(path, f'{base}.csv')
         if not os.path.exists(filepath):
             missing.append(filepath)
     return missing

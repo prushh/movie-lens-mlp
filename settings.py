@@ -23,8 +23,7 @@ raw_csv_names = [
 ]
 
 external_tsv_names = [
-    'title.basics.tsv.gz',
-    'name.basics.tsv.gz'
+    'title.basics.tsv.gz'
 ]
 
 external_csv_names = [
