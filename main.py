@@ -3,7 +3,7 @@ import os
 import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
 
-from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING, folders_name, external_csv_names, \
+from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING, folders_name, external_tmdb_csv_names, \
     raw_csv_names, IMDB_URL, external_tsv_names
 from utility import retrieve_tmdb, retrieve_movie_lens, retrieve_imdb
 
@@ -39,7 +39,7 @@ def main() -> int:
 
     external_path = os.path.join(DATASETS_DIR, 'external')
     features = {'budget', 'revenue', 'adult'}
-    if not retrieve_tmdb(links, external_path, external_csv_names, features):
+    if not retrieve_tmdb(links, external_path, external_tmdb_csv_names, features):
         return 1
 
     if not retrieve_imdb(IMDB_URL, external_path, external_tsv_names):

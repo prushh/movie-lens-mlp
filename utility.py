@@ -175,12 +175,6 @@ def retrieve_imdb(url: str, out_dir: str, file_tsv_names: List[str]) -> bool:
     :param file_tsv_names:
     :return:
     """
-    file_csv_names = []
-    for filename in file_tsv_names:
-        base_tsv = os.path.splitext(filename)[0]
-        base = os.path.splitext(base_tsv)[0]
-        file_csv_names.append(f'{base}.csv')
-
     missing = get_missing_files(out_dir, file_tsv_names)
 
     if missing:

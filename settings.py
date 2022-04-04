@@ -26,7 +26,11 @@ external_tsv_names = [
     'title.basics.tsv.gz'
 ]
 
-external_csv_names = [
+external_imdb_csv_names = [
+    'title-basics.csv'
+]
+
+external_tmdb_csv_names = [
     'tmdb-features.csv'
 ]
 
