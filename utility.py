@@ -109,12 +109,11 @@ def tsv_to_csv(filepath: str) -> str:
 
 def download_file(url: str, filepath: str, filename: str) -> bool:
     """
-    Download a file specified by the url, it shows also a progress bar.
-    TODO: write!
-    :param url:
-    :param filepath:
-    :param filename:
-    :return:
+    Download a file specified by the url, it also shows a progress bar.
+    :param url: the web URI to the resource
+    :param filepath: the path of the file to be downloaded
+    :param filename: the name of the file to be downloaded
+    :return: False if something went wrong during the download or True instead
     """
     with requests.get(url, stream=True) as req:
         total_size = int(req.headers.get('Content-Length'))
@@ -140,11 +139,11 @@ def download_file(url: str, filepath: str, filename: str) -> bool:
 
 def retrieve_movie_lens(url: str, out_dir: str, file_csv_names: List) -> bool:
     """
-    TODO: write!
-    :param url:
-    :param out_dir:
-    :param file_csv_names:
-    :return:
+    Retrieve, if necessary, MovieLens datasets specified in the file_csv_names list.
+    :param url: the web URI to the resource
+    :param out_dir: the directory where the files are saved
+    :param file_csv_names: the list with all the files to check
+    :return: False if something went wrong during the download or True instead
     """
     to_download = missing_files(out_dir, file_csv_names)
 
@@ -153,15 +152,15 @@ def retrieve_movie_lens(url: str, out_dir: str, file_csv_names: List) -> bool:
         filename = os.path.basename(url)
         filepath = os.path.join(out_dir, filename)
         if not os.path.exists(filepath):
-            print(f'Some raw datasets missing, start download from {os.path.dirname(url)}')
+            print(f'Some raw MovieLens datasets missing, start download from {os.path.dirname(url)}')
             if not download_file(url, filepath, filename):
                 return False
 
         extracted = unzip(filepath, out_dir)
         os.remove(filepath)
         output_datasets(extracted)
-    else:
-        print('No needed to download raw datasets.')
+    else:   
+        print('No needed to download raw MovieLens datasets.')
         print('-' * 30)
 
     return True
@@ -169,17 +168,17 @@ def retrieve_movie_lens(url: str, out_dir: str, file_csv_names: List) -> bool:
 
 def retrieve_imdb(url: str, out_dir: str, file_tsv_names: List[str]) -> bool:
     """
-    TODO: write!
-    :param url:
-    :param out_dir:
-    :param file_tsv_names:
-    :return:
+    Retrieve, if necessary, IMDB datasets specified in the file_tsv_names list.
+    :param url: the web URI to the resource
+    :param out_dir: the directory where the files are saved
+    :param file_tsv_names: the list with all the files to check
+    :return: False if something went wrong during the download or True instead
     """
     missing = get_missing_files(out_dir, file_tsv_names)
 
     if missing:
         extracted = []
-        print(f'Some external datasets missing, start download from {os.path.dirname(url)}')
+        print(f'Some external IMDB datasets missing, start download from {os.path.dirname(url)}')
         for filepath in missing:
             filename = os.path.basename(filepath)
             if not os.path.exists(filepath):
@@ -196,7 +195,7 @@ def retrieve_imdb(url: str, out_dir: str, file_tsv_names: List[str]) -> bool:
 
         output_datasets(extracted)
     else:
-        print('No needed to download external datasets.')
+        print('No needed to download external IMDB datasets.')
         print('-' * 30)
 
     return True
@@ -252,6 +251,9 @@ def retrieve_tmdb(df: pd.DataFrame, out_dir: str, file_csv_names: List, features
         load_dotenv()
         token = os.environ.get('TMDB_API_KEY')
 
+        url = TMDB_API_URL.substitute(tmdb_id='', api_key='')
+        print(f"Some external TMDB datasets missing, start API requests from{os.path.dirname(url)}")
+
         tmdb_features = pd.DataFrame()
         for (movie_id, _, tmdb_id) in df.itertuples(index=False):
             url = TMDB_API_URL.substitute(tmdb_id=tmdb_id, api_key=token)
@@ -267,11 +269,12 @@ def retrieve_tmdb(df: pd.DataFrame, out_dir: str, file_csv_names: List, features
                 return False
             else:
                 tmdb_features = pd.concat([tmdb_features, sample], ignore_index=True)
-                # TODO: write better output messages
 
         tmdb_features_path = os.path.join(out_dir, filename)
         tmdb_features.to_csv(tmdb_features_path, index=False, encoding='utf-8')
-        print('Following datasets saved:')
-        print(f'\t- {filename}')
+        output_datasets([filename])
+    else:
+        print('No needed to download external TMDB datasets.')
+        print('-' * 30)
 
     return True
