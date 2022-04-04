@@ -8,17 +8,6 @@ from settings import MOVIE_LENS_URL, DATASETS_DIR, folders_name, external_tmdb_c
 from utility import retrieve_tmdb, retrieve_movie_lens, retrieve_imdb
 
 
-def overview(dir_path: str):
-    for dataset in os.listdir(dir_path):
-        ext = os.path.splitext(dataset)[-1].lower()
-        filepath = os.path.join(dir_path, dataset)
-        if ext == '.csv':
-            df = pd.read_csv(filepath, encoding='utf-8')
-            print(f'Filename: {os.path.basename(filepath)}')
-            print(f'Shape: {df.shape}')
-            print(f'Columns: {df.columns}', end='\n\n')
-
-
 def main() -> int:
     if not os.path.exists(DATASETS_DIR):
         os.mkdir(DATASETS_DIR)
@@ -32,10 +21,8 @@ def main() -> int:
     if not retrieve_movie_lens(MOVIE_LENS_URL, raw_path, raw_csv_names):
         return 1
 
-    movies = pd.read_csv(os.path.join(raw_path, 'movies.csv'), encoding='utf-8')
+    # TODO: import here of all raw datasets
     links = pd.read_csv(os.path.join(raw_path, 'links.csv'), encoding='utf-8')
-    tags = pd.read_csv(os.path.join(raw_path, 'tags.csv'), encoding='utf-8')
-    ratings = pd.read_csv(os.path.join(raw_path, 'ratings.csv'), encoding='utf-8')
 
     external_path = os.path.join(DATASETS_DIR, 'external')
     features = {'budget', 'revenue', 'adult'}
@@ -45,7 +32,7 @@ def main() -> int:
     if not retrieve_imdb(IMDB_URL, external_path, external_tsv_names):
         return 1
 
-    # overview(DATASETS_DIR)
+    # TODO: check if interim and processed .csv file exist
     preprocessing()
 
     return 0
