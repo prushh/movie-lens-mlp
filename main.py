@@ -1,11 +1,10 @@
 import os
 
-import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MultiLabelBinarizer
 
-from settings import MOVIE_LENS_URL, DATASETS_DIR, YEAR_ENCODING, folders_name, external_tmdb_csv_names, \
-    raw_csv_names, IMDB_URL, external_tsv_names
+from preprocessing import preprocessing
+from settings import MOVIE_LENS_URL, DATASETS_DIR, folders_name, external_tmdb_csv_names, raw_csv_names, IMDB_URL, \
+    external_tsv_names
 from utility import retrieve_tmdb, retrieve_movie_lens, retrieve_imdb
 
 
