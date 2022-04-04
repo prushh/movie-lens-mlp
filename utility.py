@@ -51,7 +51,7 @@ def get_missing_files(path: str, filenames: List[str]) -> List[str]:
         base = os.path.splitext(base_tsv)[0].replace('.', '-')
         filepath = os.path.join(path, f'{base}.csv')
         if not os.path.exists(filepath):
-            missing.append(filepath)
+            missing.append(filename)
     return missing
 
 
@@ -183,6 +183,7 @@ def retrieve_imdb(url: str, out_dir: str, file_tsv_names: List[str]) -> bool:
             filename = os.path.basename(filepath)
             if not os.path.exists(filepath):
                 file_url = os.path.join(url, filename)
+                filepath = os.path.join(out_dir, filename)
                 if not download_file(file_url, filepath, filename):
                     return False
 
