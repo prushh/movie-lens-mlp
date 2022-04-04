@@ -159,7 +159,7 @@ def retrieve_movie_lens(url: str, out_dir: str, file_csv_names: List) -> bool:
         extracted = unzip(filepath, out_dir)
         os.remove(filepath)
         output_datasets(extracted)
-    else:   
+    else:
         print('No needed to download raw MovieLens datasets.')
         print('-' * 30)
 
