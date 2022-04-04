@@ -1,4 +1,4 @@
-import os.path
+import os
 from string import Template
 
 MOVIE_LENS_URL = 'https://files.grouplens.org/datasets/movielens/ml-latest.zip'
@@ -35,5 +35,4 @@ external_tmdb_csv_names = [
     'tmdb-features.csv'
 ]
 
-YEAR_ENCODING = False
-LINKS_FLAG = True
+PLOT = True
