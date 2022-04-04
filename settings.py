@@ -35,4 +35,5 @@ external_tmdb_csv_names = [
     'tmdb-features.csv'
 ]
 
-PLOT = True
+PLOT = False
+DROP = False

@@ -7,9 +7,8 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.preprocessing import MultiLabelBinarizer
 
-from settings import raw_csv_names, external_imdb_csv_names, external_tmdb_csv_names, PLOT, DATASETS_DIR
+from settings import raw_csv_names, external_imdb_csv_names, external_tmdb_csv_names, PLOT, DATASETS_DIR, DROP
 
-# sns.set_style('darkgrid', {'font.size': 18})
 plt.rcParams.update({'figure.figsize': (16, 10), 'figure.dpi': 100, 'font.size': 18})
 
 
@@ -59,10 +58,20 @@ def tag_preprocessing(tags: pd.DataFrame) -> pd.DataFrame:
     return movies_tags_count
 
 
+def remove_no_genres_movies(movies: pd.DataFrame) -> pd.DataFrame:
+    # Drop samples that haven't any genres
+    movies_no_genre = movies[movies['(no genres listed)'] == 1].index.to_numpy()
+    local_movies = movies.drop(index=movies_no_genre)
+    if DROP:
+        print(f'Number of films without any genres to be dropped: {movies_no_genre.shape[0]}')
+    return local_movies
+
+
 def movies_preprocessing(movies: pd.DataFrame) -> pd.DataFrame:
     local_movies = extract_year(movies)
     local_movies['title_length'] = movies['title'].str.len()
     local_movies = sep_genres_movies(local_movies)
+    local_movies = remove_no_genres_movies(local_movies)
     # Drop title and genres columns after encoding
     local_movies.drop(columns=['title', 'genres'], inplace=True)
     return local_movies
@@ -119,12 +128,46 @@ def extract_runtime(imdb: pd.DataFrame, tmdb: pd.DataFrame, links: pd.DataFrame)
         )
     median_runtime = runtime.median()
     tmdb['runtime'].fillna(median_runtime, inplace=True)
-
+    # TODO: Apply Standardization on the training set
     return tmdb
 
 
 def external_preprocessing(imdb: pd.DataFrame, tmdb: pd.DataFrame, links: pd.DataFrame) -> pd.DataFrame:
     local_tmdb = extract_runtime(imdb, tmdb, links)
+    local_tmdb = local_tmdb.drop(columns=['adult'])
+    # TODO: Think about hold budget and revenue
+    budget = local_tmdb['budget']
+    revenue = local_tmdb['revenue']
+
+    median_budget = budget.mean()
+    median_revenue = revenue.mean()
+    print(median_budget)
+    print(f"Num of 0 budget before: {budget[budget == 0].shape[0]}")
+    budget.replace(0, median_budget, inplace=True)
+    print(f"Num of 0 budget after: {budget[budget == 0].shape[0]}")
+
+
+    print(median_revenue)
+    print(f"Num of 0 revenue before: {revenue[revenue == 0].shape[0]}")
+    revenue.replace(0, median_revenue, inplace=True)
+    print(f"Num of 0 revenue after: {revenue[revenue == 0].shape[0]}")
+
+    if PLOT:
+        plot_distribution(
+            budget,
+            title='Frequency Histogram',
+            x_label='Budgets',
+            y_label='Number of films',
+            bins=100
+        )
+        plot_distribution(
+            revenue,
+            title='Frequency Histogram',
+            x_label='Revenues',
+            y_label='Number of films',
+            bins=100
+        )
+
     return local_tmdb
 
 
@@ -143,14 +186,14 @@ def extract_year(movies: pd.DataFrame) -> pd.DataFrame:
     # Filling data missing
     movies['year'].fillna(median_year)
 
-    # TODO: review minmax scaling if must be somewhere else
+    # TODO: apply minmax scaling from training set and apply on all the other set
     # min-max scaling
-    movie_year = movies['year'].astype('float32')
-    year_min = movie_year.min()
-    year_max = movie_year.max()
-    movie_year -= year_min
-    movie_year /= (year_max - year_min)
-    movies['year'] = movie_year
+    # movie_year = movies['year'].astype('float32')
+    # year_min = movie_year.min()
+    # year_max = movie_year.max()
+    # movie_year -= year_min
+    # movie_year /= (year_max - year_min)
+    # movies['year'] = movie_year
     return movies
 
 
@@ -166,16 +209,31 @@ def plot_distribution(x_values: pd.Series, title: str, x_label: str, y_label: st
 
 
 def merge_final_df(dict_all_df: Dict) -> pd.DataFrame:
-    pass
+    final_df = pd.merge(dict_all_df['movies'], dict_all_df['ratings'], on='movieId', how='inner')
+    if DROP:
+        print(f'Number of film without rating to be dropped: {dict_all_df["movies"].shape[0] - final_df.shape[0]}')
+        print(f'Final shape: {final_df.shape[0]}')
+    final_df = pd.merge(final_df, dict_all_df['tags'], on='movieId', how='left')
+
+    final_df['tag_count'].fillna(0)
+    final_df = pd.merge(final_df, dict_all_df['tmdb-features'], on='movieId', how='inner')
+
+    return final_df
 
 
 def preprocessing() -> pd.DataFrame:
     all_csv_names = raw_csv_names + external_imdb_csv_names + external_tmdb_csv_names
     path = DATASETS_DIR
     dict_df = import_df(all_csv_names, path)
-    dict_df['tmdb-features'] = external_preprocessing(dict_df['title-basics'], dict_df['tmdb-features'],
-                                                      dict_df['links'])
+    if DROP:
+        print(f"Number of samples before preprocessing: {dict_df['movies'].shape[0]}")
+
+    dict_df['tmdb-features'] = external_preprocessing(
+        dict_df['title-basics'],
+        dict_df['tmdb-features'],
+        dict_df['links']
+    )
     dict_df['tags'] = tag_preprocessing(dict_df['tags'])
     dict_df['ratings'] = rating_preprocessing(dict_df['ratings'])
     dict_df['movies'] = movies_preprocessing(dict_df['movies'])
-    return pd.DataFrame()
+    return merge_final_df(dict_df)
