@@ -7,7 +7,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from sklearn.preprocessing import MultiLabelBinarizer
 
-from settings import raw_csv_names, external_imdb_csv_names, external_tmdb_csv_names, PLOT, DATASETS_DIR, DROP, \
+from settings import raw_csv_names, external_imdb_csv_names, external_tmdb_csv_names, PLOT, DATA_DIR, DROP, \
     folders_name
 
 plt.rcParams.update({'figure.figsize': (16, 10), 'figure.dpi': 100, 'font.size': 18})
@@ -194,7 +194,7 @@ def merge_final_df(dict_all_df: Dict) -> pd.DataFrame:
 
 def retrieve_all_csv_names(path: List[str], idx_folders: int) -> List[str]:
     csv_names = []
-    folder_path = os.path.join(DATASETS_DIR, folders_name[idx_folders])
+    folder_path = os.path.join(DATA_DIR, folders_name[idx_folders])
     for name in path:
         filename = os.path.join(folder_path, name)
         csv_names.append(filename)
