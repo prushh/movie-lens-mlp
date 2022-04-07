@@ -9,6 +9,11 @@ import requests
 from tqdm import tqdm
 
 
+def overview_data(df: pd.DataFrame) -> None:
+    print(f'Shape: {df.shape}')
+    print(f'Columns: {df.columns.values}')
+
+
 def output_datasets(extracted: List[str]) -> None:
     """
     Print all elements of extracted list
