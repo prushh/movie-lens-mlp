@@ -9,11 +9,6 @@ import requests
 from tqdm import tqdm
 
 
-def overview_data(df: pd.DataFrame) -> None:
-    print(f'Shape: {df.shape}')
-    print(f'Columns: {df.columns.values}')
-
-
 def output_datasets(extracted: List[str]) -> None:
     """
     Print all elements of extracted list
@@ -119,7 +114,7 @@ def download_file(url: str, filepath: str, filename: str) -> bool:
 
 def gunzip(src_filepath: str, dest_filepath: str, block_size: int = 65536) -> None:
     """
-    Decompress .gz file.
+    Decompress .gz file
     :param src_filepath: the input .gz filepath
     :param dest_filepath: the output filepath
     :param block_size: the chuck size for the decompression

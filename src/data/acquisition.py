@@ -43,12 +43,14 @@ def retrieve_tmdb(df: pd.DataFrame, out_dir: str, dir_csv_names: List, features:
                     features
                 )
             except requests.exceptions.RequestException:
+                if log:
+                    print('Save after error.')
+                    tmdb_features.to_csv('data/external/tmdb-features-tmp.csv', encoding='utf-8', index=False)
                 print('Error, something went wrong during the API requests.')
                 return False
             else:
                 tmdb_features = pd.concat([tmdb_features, sample], ignore_index=True)
                 if log:
-                    print(sample)
                     print(f'Samples: {tmdb_features.shape[0]}')
 
         tmdb_features_path = os.path.join(out_dir, filename)
