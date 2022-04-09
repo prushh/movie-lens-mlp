@@ -44,17 +44,10 @@ def reset_index(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def extract_stat_feature(df: pd.DataFrame, by: List[str], column: str, stat: List[str]) -> pd.DataFrame:
-    df_stat = pd.DataFrame(
-        df.groupby(by=by, as_index=False)[column].agg(stat)
-    )
+    df_stat = df.groupby(by=by, as_index=False)[column].agg(stat)
     return df_stat
 
 
 def apply(df: pd.DataFrame, column: str, func) -> pd.DataFrame:
     df[column] = df[column].apply(func)
-    return df
-
-
-def merge(df_left: pd.DataFrame, df_right: pd.DataFrame, **kwargs) -> pd.DataFrame:
-    df = pd.merge(df_left, df_right, **kwargs)
     return df

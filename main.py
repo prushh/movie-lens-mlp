@@ -6,7 +6,7 @@ def main() -> int:
     if not retrieve_datasets():
         return 1
 
-    # preprocessing()
+    preprocessing()
 
 
 if __name__ == '__main__':

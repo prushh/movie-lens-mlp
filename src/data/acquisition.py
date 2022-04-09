@@ -12,7 +12,7 @@ from src.utils.util import missing_files, download_file, unzip, output_datasets,
 
 
 def retrieve_tmdb(df: pd.DataFrame, out_dir: str, dir_csv_names: List, features: Set[str],
-                  filename: str = 'tmdb-features-old.csv', log: bool = False) -> bool:
+                  filename: str = 'tmdb.csv', log: bool = False) -> bool:
     """
     If not exists create a .csv that contains new features, retrieved by API requests to TMDB service
     :param df: the DataFrame that contains movies_id and tmdb_id
@@ -30,9 +30,9 @@ def retrieve_tmdb(df: pd.DataFrame, out_dir: str, dir_csv_names: List, features:
         token = os.environ.get('TMDB_API_KEY')
 
         url = TMDB_API_URL.substitute(tmdb_id='', api_key='')
-        print(f'Some external TMDB data missing, start API requests from{os.path.dirname(url)}')
+        print(f'Some external TMDB data missing, start API requests from {os.path.dirname(url)}')
 
-        tmdb_features = pd.DataFrame()
+        tmdb = pd.DataFrame()
         for (movie_id, _, tmdb_id) in df.itertuples(index=False):
             url = TMDB_API_URL.substitute(tmdb_id=tmdb_id, api_key=token)
             try:
@@ -42,23 +42,24 @@ def retrieve_tmdb(df: pd.DataFrame, out_dir: str, dir_csv_names: List, features:
                     tmdb_id,
                     features
                 )
-            except requests.exceptions.RequestException:
+            except requests.exceptions.RequestException as e:
                 if log:
-                    print('Save after error.')
-                    tmdb_features.to_csv('data/external/tmdb-features-tmp.csv', encoding='utf-8', index=False)
+                    print(e)
+                    filepath_tmp = os.path.join(out_dir, f'{os.path.basename(filename)}-tmp.csv')
+                    tmdb.to_csv(filepath_tmp, encoding='utf-8', index=False)
                 print('Error, something went wrong during the API requests.')
                 return False
             else:
-                tmdb_features = pd.concat([tmdb_features, sample], ignore_index=True)
+                tmdb = pd.concat([tmdb, sample], ignore_index=True)
                 if log:
-                    print(f'Samples: {tmdb_features.shape[0]}')
+                    print(f'Samples: {tmdb.shape[0]}')
 
-        tmdb_features_path = os.path.join(out_dir, filename)
-        tmdb_features.to_csv(tmdb_features_path, index=False, encoding='utf-8')
+        tmdb_path = os.path.join(out_dir, filename)
+        tmdb.to_csv(tmdb_path, index=False, encoding='utf-8')
         output_datasets([filename])
     else:
         print('No needed to download external TMDB data.')
-        print('-' * 30)
+    print('-' * 30)
 
     return True
 
@@ -85,6 +86,7 @@ def retrieve_imdb(url: str, out_dir: str, dir_csv_names: List[str]) -> bool:
                     return False
 
             filepath_csv = os.path.join(out_dir, filename_csv)
+            print('Decompression...')
             gunzip(filepath_tsv, filepath_csv)
             converted = tsv_to_csv(filepath_csv)
             extracted.append(converted)
@@ -94,7 +96,7 @@ def retrieve_imdb(url: str, out_dir: str, dir_csv_names: List[str]) -> bool:
         output_datasets(extracted)
     else:
         print('No needed to download external IMDB data.')
-        print('-' * 30)
+    print('-' * 30)
 
     return True
 
@@ -118,12 +120,13 @@ def retrieve_movie_lens(url: str, out_dir: str, dir_csv_names: List[str]) -> boo
             if not download_file(url, filepath, filename):
                 return False
 
+        print('Decompression...')
         extracted = unzip(filepath, out_dir)
         os.remove(filepath)
         output_datasets(extracted)
     else:
         print('No needed to download raw MovieLens data.')
-        print('-' * 30)
+    print('-' * 30)
 
     return True
 
@@ -152,7 +155,7 @@ def retrieve_datasets() -> bool:
     # Retrieve TMDB dataset by API requests, links DataFrame is needed for tmdbId feature
     links = pd.read_csv(os.path.join(RAW_DIR, 'links.csv'), encoding='utf-8')
     # Specify features to retrieve from https://developers.themoviedb.org/3/movies/get-movie-details
-    features = {'imdb_id', 'budget', 'revenue', 'adult'}
+    features = {'imdb_id', 'budget', 'revenue', 'adult', 'runtime'}
     if not retrieve_tmdb(links, EXTERNAL_DIR, EXTERNAL_TMDB_CSV_NAMES, features, log=True):
         return False
 

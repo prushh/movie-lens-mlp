@@ -32,7 +32,7 @@ EXTERNAL_IMDB_CSV_NAMES = [
 ]
 
 EXTERNAL_TMDB_CSV_NAMES = [
-    'tmdb-features.csv'
+    'tmdb.csv'
 ]
 
 PLOT = False
