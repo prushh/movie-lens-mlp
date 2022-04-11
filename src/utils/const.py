@@ -44,4 +44,3 @@ INTERIM_CSV_NAMES = [
 ]
 
 PLOT = False
-DROP = False
