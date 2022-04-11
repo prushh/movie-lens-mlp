@@ -35,5 +35,13 @@ EXTERNAL_TMDB_CSV_NAMES = [
     'tmdb.csv'
 ]
 
+INTERIM_CSV_NAMES = [
+    'movies.csv',
+    'ratings.csv',
+    'tags.csv',
+    'title-basics.csv',
+    'tmdb.csv'
+]
+
 PLOT = False
 DROP = False

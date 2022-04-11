@@ -13,13 +13,16 @@ def drop(df: pd.DataFrame, columns: List[str]) -> pd.DataFrame:
     return df
 
 
-def fill_na(df: pd.DataFrame, column: str, use_median: bool) -> pd.DataFrame:
-    if use_median:
+def fill_na(df: pd.DataFrame, column: str, method: str) -> pd.DataFrame:
+    if method == 'median':
         median = df[column].median()
         df[column].fillna(median, inplace=True)
-        return df
-    mean = df[column].mean()
-    df[column].fillna(mean, inplace=True)
+    elif method == 'avg':
+        mean = df[column].mean()
+        df[column].fillna(mean, inplace=True)
+    elif method == 'zero':
+        df[column].fillna(0, inplace=True)
+
     return df
 
 
