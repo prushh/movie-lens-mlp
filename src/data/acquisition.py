@@ -1,4 +1,5 @@
 import os
+from time import sleep
 from typing import List, Set
 
 import pandas as pd
@@ -33,8 +34,9 @@ def retrieve_tmdb(df: pd.DataFrame, out_dir: str, dir_csv_names: List, features:
         print(f'Some external TMDB data missing, start API requests from {os.path.dirname(url)}')
 
         tmdb = pd.DataFrame()
-        for (movie_id, _, tmdb_id) in df.itertuples(index=False):
+        for (movie_id, tmdb_id) in df.itertuples(index=False):
             url = TMDB_API_URL.substitute(tmdb_id=tmdb_id, api_key=token)
+            sleep(.1)
             try:
                 sample = request_features_tmdb(
                     url,
@@ -45,13 +47,12 @@ def retrieve_tmdb(df: pd.DataFrame, out_dir: str, dir_csv_names: List, features:
             except requests.exceptions.RequestException as e:
                 if log:
                     print(e)
-                    filepath_tmp = os.path.join(out_dir, f'{os.path.basename(filename)}-tmp.csv')
-                    tmdb.to_csv(filepath_tmp, encoding='utf-8', index=False)
                 print('Error, something went wrong during the API requests.')
                 return False
             else:
                 tmdb = pd.concat([tmdb, sample], ignore_index=True)
                 if log:
+                    print(sample)
                     print(f'Samples: {tmdb.shape[0]}')
 
         tmdb_path = os.path.join(out_dir, filename)
@@ -153,7 +154,12 @@ def retrieve_datasets() -> bool:
         return False
 
     # Retrieve TMDB dataset by API requests, links DataFrame is needed for tmdbId feature
-    links = pd.read_csv(os.path.join(RAW_DIR, 'links.csv'), encoding='utf-8')
+    links = pd.read_csv(
+        os.path.join(RAW_DIR, 'links.csv'),
+        encoding='utf-8',
+        usecols=['movieId', 'tmdbId'],
+        dtype={'movieId': 'uint16', 'tmdbId': 'float32'}
+    )
     # Specify features to retrieve from https://developers.themoviedb.org/3/movies/get-movie-details
     features = {'imdb_id', 'budget', 'revenue', 'adult', 'runtime'}
     if not retrieve_tmdb(links, EXTERNAL_DIR, EXTERNAL_TMDB_CSV_NAMES, features, log=True):
