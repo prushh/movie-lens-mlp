@@ -6,7 +6,10 @@ def main() -> int:
     if not retrieve_datasets():
         return 1
 
-    preprocessing()
+    final = preprocessing()
+
+    print(final.info())
+    print(final.head())
 
 
 if __name__ == '__main__':

@@ -5,9 +5,9 @@ import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from src.utils.util import missing_files
-from src.utils.wrapper import convert_to, fill_na, drop, drop_na, extract_stat_feature, reset_index, rename, apply, \
+from src.utils.wrapper import convert_to, fill_na, drop, drop_na, extract_stat_feature, reset_index, rename, \
     replace
-from src.utils.const import RAW_DIR, EXTERNAL_DIR, INTERIM_DIR, PROCESSED_DIR, DROP, INTERIM_CSV_NAMES
+from src.utils.const import RAW_DIR, EXTERNAL_DIR, INTERIM_DIR, PROCESSED_DIR, INTERIM_CSV_NAMES
 
 
 def movies_processing(filepath: str) -> pd.DataFrame:
@@ -34,22 +34,20 @@ def movies_processing(filepath: str) -> pd.DataFrame:
     def remove_no_genres(df: pd.DataFrame) -> pd.DataFrame:
         df_no_genre = df[df['(no genres listed)'] == 1].index
         df.drop(index=df_no_genre, inplace=True)
-        if DROP:
-            print(f'Number of films without any genres to be dropped: {df_no_genre.shape[0]}')
         return df
 
     if os.path.exists(filepath):
         movies = pd.read_csv(
             filepath,
             encoding='utf-8',
-            dtype={'movieId': 'uint16', 'year': 'float32', 'title_length': 'int32'}
+            dtype={'movieId': 'uint32', 'year': 'float32', 'title_length': 'int32'}
         )
         return movies
 
     movies = pd.read_csv(
         os.path.join(RAW_DIR, 'movies.csv'),
         encoding='utf-8',
-        dtype={'movieId': 'uint16', 'title': 'string', 'genres': 'category'}
+        dtype={'movieId': 'uint32', 'title': 'string', 'genres': 'category'}
     )
 
     movies = movies. \
@@ -71,7 +69,7 @@ def tags_processing(filepath: str) -> pd.DataFrame:
         tags = pd.read_csv(
             filepath,
             encoding='utf-8',
-            dtype={'movieId': 'uint16', 'tag_count': 'int32'}
+            dtype={'movieId': 'uint32', 'tag_count': 'int32'}
         )
         return tags
 
@@ -79,7 +77,7 @@ def tags_processing(filepath: str) -> pd.DataFrame:
         os.path.join(RAW_DIR, 'tags.csv'),
         encoding='utf-8',
         usecols=['movieId', 'tag'],
-        dtype={'movieId': 'uint16', 'tag': 'string'}
+        dtype={'movieId': 'uint32', 'tag': 'string'}
     )
 
     tags = tags. \
@@ -87,8 +85,8 @@ def tags_processing(filepath: str) -> pd.DataFrame:
         pipe(extract_stat_feature, ['movieId'], 'tag', ['count']). \
         pipe(reset_index). \
         pipe(rename, {'count': 'tag_count'}). \
-        pipe(convert_to, 'tag_count', 'int32'). \
-        pipe(fill_na, 'tag_count', 'zero')
+        pipe(fill_na, 'tag_count', 'zero'). \
+        pipe(convert_to, 'tag_count', 'int32')
 
     tags.to_csv(filepath, encoding='utf-8', index=False)
     return tags
@@ -99,7 +97,7 @@ def ratings_processing(filepath: str) -> pd.DataFrame:
         ratings = pd.read_csv(
             filepath,
             encoding='utf-8',
-            dtype={'movieId': 'uint16', 'rating_count': 'int32', 'rating_mean': 'float32'}
+            dtype={'movieId': 'uint32', 'rating_count': 'int32', 'rating_mean': 'float32'}
         )
         return ratings
 
@@ -107,7 +105,7 @@ def ratings_processing(filepath: str) -> pd.DataFrame:
         os.path.join(RAW_DIR, 'ratings.csv'),
         encoding='utf-8',
         usecols=['movieId', 'rating'],
-        dtype={'movieId': 'uint16', 'rating': 'float32'}
+        dtype={'movieId': 'uint32', 'rating': 'float32'}
     )
 
     ratings = ratings. \
@@ -155,8 +153,8 @@ def tmdb_processing(filepath: str) -> pd.DataFrame:
         tmdb = pd.read_csv(
             filepath,
             encoding='utf-8',
-            usecols=['movieId', 'tmdbId', 'imdb_id', 'runtime'],
-            dtype={'movieId': 'uint16', 'imdb_id': 'string', 'tmdbId': 'float32', 'runtime': 'float32'}
+            usecols=['movieId', 'runtime'],
+            dtype={'movieId': 'uint32', 'runtime': 'float32'}
         )
         return tmdb
 
@@ -171,14 +169,14 @@ def tmdb_processing(filepath: str) -> pd.DataFrame:
         os.path.join(EXTERNAL_DIR, 'tmdb.csv'),
         encoding='utf-8',
         usecols=['movieId', 'tmdbId', 'imdb_id', 'runtime'],
-        dtype={'movieId': 'uint16', 'imdb_id': 'string', 'tmdbId': 'float32', 'runtime': 'float32'}
+        dtype={'movieId': 'uint32', 'imdb_id': 'string', 'tmdbId': 'float32', 'runtime': 'float32'}
     )
 
     tmdb = tmdb. \
         pipe(pd.merge, imdb, how='left', left_on='imdb_id', right_on='tconst'). \
         pipe(extract_correct_runtime). \
         pipe(fill_na, 'runtime', 'median'). \
-        pipe(drop, ['tconst', 'runtime_x', 'runtime_y'])
+        pipe(drop, ['tmdbId', 'imdb_id', 'tconst', 'runtime_x', 'runtime_y'])
 
     tmdb.to_csv(filepath, encoding='utf-8', index=False)
     return tmdb
@@ -204,9 +202,11 @@ def preprocessing() -> pd.DataFrame:
 
     filepath = os.path.join(PROCESSED_DIR, 'final.csv')
     if os.path.exists(filepath) and not some_interim_missing:
+        # TODO: specify type for final.csv
         final = pd.read_csv(
             filepath,
-            encoding='utf-8'
+            encoding='utf-8',
+            dtype='float32'
         )
         return final
 
