@@ -67,16 +67,16 @@ def rename(df: pd.DataFrame, _dict: Dict[str, str]) -> pd.DataFrame:
     return df
 
 
-def replace(df: pd.DataFrame, column: str, to_replace: str, value: Any):
+def replace(df: pd.DataFrame, column: str, regex: str, value: Any):
     """
     Wrapper to Series.replace() function
     :param df: DataFrame used in the pipe
     :param column: the column which values will be replaced
-    :param to_replace: how to find the values that will be replaced
+    :param regex: how to find the values that will be replaced
     :param value: the value to replace any values matching to_replace with
     :return: the same DataFrame with value where to_replace match
     """
-    df[column].replace(to_replace=to_replace, value=value, inplace=True)
+    df[column].replace(regex=regex, value=value, inplace=True)
     return df
 
 
