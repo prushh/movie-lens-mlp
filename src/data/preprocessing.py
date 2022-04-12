@@ -7,7 +7,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 from src.utils.util import missing_files
 from src.utils.wrapper import convert_to, fill_na, drop, drop_na, extract_stat_feature, reset_index, rename, \
     replace
-from src.utils.const import RAW_DIR, EXTERNAL_DIR, INTERIM_DIR, PROCESSED_DIR, INTERIM_CSV_NAMES
+from src.utils.const import RAW_DIR, EXTERNAL_DIR, INTERIM_DIR, PROCESSED_DIR, INTERIM_PARQUET_NAMES
 
 
 def movies_processing(filepath: str) -> pd.DataFrame:
@@ -37,11 +37,7 @@ def movies_processing(filepath: str) -> pd.DataFrame:
         return df
 
     if os.path.exists(filepath):
-        movies = pd.read_csv(
-            filepath,
-            encoding='utf-8',
-            dtype={'movieId': 'uint32', 'year': 'float32', 'title_length': 'int32'}
-        )
+        movies = pd.read_parquet(filepath)
         return movies
 
     movies = pd.read_csv(
@@ -60,17 +56,13 @@ def movies_processing(filepath: str) -> pd.DataFrame:
         pipe(remove_no_genres). \
         pipe(drop, ['title', 'genres', '(no genres listed)'])
 
-    movies.to_csv(filepath, encoding='utf-8', index=False)
+    movies.to_parquet(filepath)
     return movies
 
 
 def tags_processing(filepath: str) -> pd.DataFrame:
     if os.path.exists(filepath):
-        tags = pd.read_csv(
-            filepath,
-            encoding='utf-8',
-            dtype={'movieId': 'uint32', 'tag_count': 'int32'}
-        )
+        tags = pd.read_parquet(filepath)
         return tags
 
     tags = pd.read_csv(
@@ -85,20 +77,15 @@ def tags_processing(filepath: str) -> pd.DataFrame:
         pipe(extract_stat_feature, ['movieId'], 'tag', ['count']). \
         pipe(reset_index). \
         pipe(rename, {'count': 'tag_count'}). \
-        pipe(fill_na, 'tag_count', 'zero'). \
-        pipe(convert_to, 'tag_count', 'int32')
+        pipe(convert_to, 'tag_count', 'float32')
 
-    tags.to_csv(filepath, encoding='utf-8', index=False)
+    tags.to_parquet(filepath)
     return tags
 
 
 def ratings_processing(filepath: str) -> pd.DataFrame:
     if os.path.exists(filepath):
-        ratings = pd.read_csv(
-            filepath,
-            encoding='utf-8',
-            dtype={'movieId': 'uint32', 'rating_count': 'int32', 'rating_mean': 'float32'}
-        )
+        ratings = pd.read_parquet(filepath)
         return ratings
 
     ratings = pd.read_csv(
@@ -114,18 +101,13 @@ def ratings_processing(filepath: str) -> pd.DataFrame:
         pipe(rename, {'count': 'rating_count', 'mean': 'rating_mean'}). \
         pipe(convert_to, 'rating_count', 'int32')
 
-    ratings.to_csv(filepath, encoding='utf-8', index=False)
+    ratings.to_parquet(filepath)
     return ratings
 
 
 def imdb_processing(filepath: str) -> pd.DataFrame:
     if os.path.exists(filepath):
-        imdb = pd.read_csv(
-            filepath,
-            encoding='utf-8',
-            usecols=['tconst', 'runtime'],
-            dtype={'tconst': 'string', 'runtime': 'float32'}
-        )
+        imdb = pd.read_parquet(filepath)
         return imdb
 
     imdb = pd.read_csv(
@@ -140,30 +122,18 @@ def imdb_processing(filepath: str) -> pd.DataFrame:
         pipe(convert_to, 'runtimeMinutes', 'float32'). \
         pipe(rename, {'runtimeMinutes': 'runtime'})
 
-    imdb.to_csv(filepath, encoding='utf-8', index=False)
+    imdb.to_parquet(filepath)
     return imdb
 
 
-def tmdb_processing(filepath: str) -> pd.DataFrame:
+def tmdb_processing(filepath: str, imdb: pd.DataFrame) -> pd.DataFrame:
     def extract_correct_runtime(df: pd.DataFrame) -> pd.DataFrame:
         df['runtime'] = df['runtime_x'].mask((df['runtime_x'].isna()) | (df['runtime_x'] == 0), df['runtime_y'])
         return df
 
     if os.path.exists(filepath):
-        tmdb = pd.read_csv(
-            filepath,
-            encoding='utf-8',
-            usecols=['movieId', 'runtime'],
-            dtype={'movieId': 'uint32', 'runtime': 'float32'}
-        )
+        tmdb = pd.read_parquet(filepath)
         return tmdb
-
-    imdb = pd.read_csv(
-        os.path.join(INTERIM_DIR, 'title-basics.csv'),
-        encoding='utf-8',
-        usecols=['tconst', 'runtime'],
-        dtype={'tconst': 'string', 'runtime': 'float32'}
-    )
 
     tmdb = pd.read_csv(
         os.path.join(EXTERNAL_DIR, 'tmdb.csv'),
@@ -178,42 +148,38 @@ def tmdb_processing(filepath: str) -> pd.DataFrame:
         pipe(fill_na, 'runtime', 'median'). \
         pipe(drop, ['tmdbId', 'imdb_id', 'tconst', 'runtime_x', 'runtime_y'])
 
-    tmdb.to_csv(filepath, encoding='utf-8', index=False)
+    tmdb.to_parquet(filepath)
     return tmdb
 
 
 def preprocessing() -> pd.DataFrame:
-    some_interim_missing = missing_files(INTERIM_DIR, INTERIM_CSV_NAMES)
+    some_interim_missing = missing_files(INTERIM_DIR, INTERIM_PARQUET_NAMES)
 
-    filepath = os.path.join(INTERIM_DIR, 'movies.csv')
+    filepath = os.path.join(INTERIM_DIR, 'movies.parquet')
     movies = movies_processing(filepath)
 
-    filepath = os.path.join(INTERIM_DIR, 'tags.csv')
+    filepath = os.path.join(INTERIM_DIR, 'tags.parquet')
     tags = tags_processing(filepath)
 
-    filepath = os.path.join(INTERIM_DIR, 'ratings.csv')
+    filepath = os.path.join(INTERIM_DIR, 'ratings.parquet')
     ratings = ratings_processing(filepath)
 
-    filepath = os.path.join(INTERIM_DIR, 'title-basics.csv')
-    _ = imdb_processing(filepath)
+    filepath = os.path.join(INTERIM_DIR, 'title-basics.parquet')
+    imdb = imdb_processing(filepath)
 
-    filepath = os.path.join(INTERIM_DIR, 'tmdb.csv')
-    tmdb = tmdb_processing(filepath)
+    filepath = os.path.join(INTERIM_DIR, 'tmdb.parquet')
+    tmdb = tmdb_processing(filepath, imdb)
 
-    filepath = os.path.join(PROCESSED_DIR, 'final.csv')
+    filepath = os.path.join(PROCESSED_DIR, 'final.parquet')
     if os.path.exists(filepath) and not some_interim_missing:
-        # TODO: specify type for final.csv
-        final = pd.read_csv(
-            filepath,
-            encoding='utf-8',
-            dtype='float32'
-        )
+        final = pd.read_parquet(filepath)
         return final
 
     final = movies. \
         pipe(pd.merge, ratings, on='movieId', how='inner'). \
         pipe(pd.merge, tags, on='movieId', how='left'). \
+        pipe(fill_na, 'tag_count', 'zero'). \
         pipe(pd.merge, tmdb, on='movieId', how='inner')
 
-    final.to_csv(filepath, encoding='utf-8', index=False)
+    final.to_parquet(filepath)
     return final

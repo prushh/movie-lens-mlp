@@ -35,12 +35,12 @@ EXTERNAL_TMDB_CSV_NAMES = [
     'tmdb.csv'
 ]
 
-INTERIM_CSV_NAMES = [
-    'movies.csv',
-    'ratings.csv',
-    'tags.csv',
-    'title-basics.csv',
-    'tmdb.csv'
+INTERIM_PARQUET_NAMES = [
+    'movies.parquet',
+    'ratings.parquet',
+    'tags.parquet',
+    'title-basics.parquet',
+    'tmdb.parquet'
 ]
 
 PLOT = False
