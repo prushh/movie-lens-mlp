@@ -158,7 +158,7 @@ def retrieve_datasets() -> bool:
         os.path.join(RAW_DIR, 'links.csv'),
         encoding='utf-8',
         usecols=['movieId', 'tmdbId'],
-        dtype={'movieId': 'uint16', 'tmdbId': 'float32'}
+        dtype={'movieId': 'int32', 'tmdbId': 'float32'}
     )
     # Specify features to retrieve from https://developers.themoviedb.org/3/movies/get-movie-details
     features = {'imdb_id', 'budget', 'revenue', 'adult', 'runtime'}

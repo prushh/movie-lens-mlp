@@ -12,7 +12,7 @@ from src.utils.const import RAW_DIR, EXTERNAL_DIR, INTERIM_DIR, PROCESSED_DIR, I
 
 def movies_processing(filepath: str) -> pd.DataFrame:
     def extract_year_from_title(df: pd.DataFrame) -> pd.DataFrame:
-        regex = '.*\((\d{4})\).*'
+        regex = '.*\\((\\d{4})\\).*'
         df['year'] = df['title'].str.extract(pat=regex, expand=False)
         return df
 
@@ -43,7 +43,7 @@ def movies_processing(filepath: str) -> pd.DataFrame:
     movies = pd.read_csv(
         os.path.join(RAW_DIR, 'movies.csv'),
         encoding='utf-8',
-        dtype={'movieId': 'uint32', 'title': 'string', 'genres': 'category'}
+        dtype={'movieId': 'int32', 'title': 'string', 'genres': 'category'}
     )
 
     movies = movies. \
@@ -69,7 +69,7 @@ def tags_processing(filepath: str) -> pd.DataFrame:
         os.path.join(RAW_DIR, 'tags.csv'),
         encoding='utf-8',
         usecols=['movieId', 'tag'],
-        dtype={'movieId': 'uint32', 'tag': 'string'}
+        dtype={'movieId': 'int32', 'tag': 'string'}
     )
 
     tags = tags. \
@@ -92,7 +92,7 @@ def ratings_processing(filepath: str) -> pd.DataFrame:
         os.path.join(RAW_DIR, 'ratings.csv'),
         encoding='utf-8',
         usecols=['movieId', 'rating'],
-        dtype={'movieId': 'uint32', 'rating': 'float32'}
+        dtype={'movieId': 'int32', 'rating': 'float32'}
     )
 
     ratings = ratings. \
@@ -118,7 +118,7 @@ def imdb_processing(filepath: str) -> pd.DataFrame:
     )
 
     imdb = imdb. \
-        pipe(replace, 'runtimeMinutes', '([\\]*[a-zA-Z|\-]+)', np.nan). \
+        pipe(replace, 'runtimeMinutes', '([\\]*[a-zA-Z|\\-]+)', np.nan). \
         pipe(convert_to, 'runtimeMinutes', 'float32'). \
         pipe(rename, {'runtimeMinutes': 'runtime'})
 
@@ -139,7 +139,7 @@ def tmdb_processing(filepath: str, imdb: pd.DataFrame) -> pd.DataFrame:
         os.path.join(EXTERNAL_DIR, 'tmdb.csv'),
         encoding='utf-8',
         usecols=['movieId', 'tmdbId', 'imdb_id', 'runtime'],
-        dtype={'movieId': 'uint32', 'imdb_id': 'string', 'tmdbId': 'float32', 'runtime': 'float32'}
+        dtype={'movieId': 'int32', 'imdb_id': 'string', 'tmdbId': 'float32', 'runtime': 'float32'}
     )
 
     tmdb = tmdb. \
