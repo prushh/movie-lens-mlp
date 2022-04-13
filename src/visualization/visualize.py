@@ -1,16 +1,31 @@
+import os
+
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
 
-plt.rcParams.update({'figure.figsize': (16, 10), 'figure.dpi': 100, 'font.size': 18})
+from src.utils.const import FIGURE_DIR
+
+custom_params = {
+    'figure.figsize': (16, 10),
+    'lines.linewidth': 3,
+    'axes.titlesize': 40,
+    'axes.labelsize': 20,
+    'xtick.labelsize': 20,
+    'ytick.labelsize': 20
+}
+sns.set_theme(rc=custom_params)
 
 
-def plot_distribution(x_values: pd.Series, title: str, x_label: str, y_label: str, bins: int = 25):
-    # Plot instance
+def histogram(x_values: pd.Series, title: str, xlabel: str, ylabel: str, filename: str = '', **kwargs) -> None:
     sns.histplot(
         data=x_values,
-        bins=bins,
-        kde=True,
-        line_kws={"linewidth": 3})
-    plt.gca().set(title=title, ylabel=y_label, xlabel=x_label)
+        **kwargs
+    ).set(xlabel=xlabel, ylabel=ylabel)
+    plt.title(title)
+
+    if filename:
+        filepath = os.path.join(FIGURE_DIR, filename)
+        plt.savefig(filepath)
+
     plt.show()

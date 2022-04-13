@@ -10,6 +10,7 @@ RAW_DIR = os.path.join(DATA_DIR, 'raw')
 EXTERNAL_DIR = os.path.join(DATA_DIR, 'external')
 INTERIM_DIR = os.path.join(DATA_DIR, 'interim')
 PROCESSED_DIR = os.path.join(DATA_DIR, 'processed')
+FIGURE_DIR = os.path.join('reports', 'figures')
 
 DATA_SUB_DIRS = [
     'external',
