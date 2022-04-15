@@ -179,7 +179,8 @@ def preprocessing() -> pd.DataFrame:
         pipe(pd.merge, ratings, on='movieId', how='inner'). \
         pipe(pd.merge, tags, on='movieId', how='left'). \
         pipe(fill_na, 'tag_count', 'zero'). \
-        pipe(pd.merge, tmdb, on='movieId', how='inner')
+        pipe(pd.merge, tmdb, on='movieId', how='inner'). \
+        pipe(drop, ['movieId'])
 
     final.to_parquet(filepath)
     return final

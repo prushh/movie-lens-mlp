@@ -166,8 +166,10 @@ def retrieve_datasets() -> bool:
         if not retrieve_tmdb(links, EXTERNAL_DIR, EXTERNAL_TMDB_CSV_NAMES, features, log=True):
             return False
     else:
-        tmdb = pd.read_csv(TMDB_URL, encoding='utf-8')
+        # TODO: in future update with try:except and print some messages
         filepath = os.path.join(EXTERNAL_DIR, EXTERNAL_TMDB_CSV_NAMES[0])
-        tmdb.to_csv(filepath, index=False, encoding='utf-8')
+        if not os.path.exists(filepath):
+            tmdb = pd.read_csv(TMDB_URL, encoding='utf-8')
+            tmdb.to_csv(filepath, index=False, encoding='utf-8')
 
     return True
