@@ -45,5 +45,6 @@ INTERIM_PARQUET_NAMES = [
     'tmdb.parquet'
 ]
 
+SEED = 42
 USE_API = False
 PLOT = False
