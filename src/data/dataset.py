@@ -11,10 +11,10 @@ class MovieDataset(Dataset):
         target = 'rating_mean'
 
         X = df.loc[:, df.columns != target]
-        y = df[target]
+        y = pd.cut(df[target], bins=10, labels=False)
 
         self.X = torch.FloatTensor(np.array(X))
-        self.y = torch.FloatTensor(y)
+        self.y = torch.LongTensor(y)
 
     def __len__(self) -> int:
         return self.X.shape[0]
