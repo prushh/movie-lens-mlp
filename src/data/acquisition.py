@@ -7,7 +7,7 @@ import requests
 from dotenv import load_dotenv
 
 from src.utils.const import DATA_DIR, DATA_SUB_DIRS, RAW_CSV_NAMES, MOVIE_LENS_URL, IMDB_URL, EXTERNAL_IMDB_CSV_NAMES, \
-    EXTERNAL_TMDB_CSV_NAMES, TMDB_API_URL
+    EXTERNAL_TMDB_CSV_NAMES, TMDB_API_URL, TMDB_URL, USE_API
 from src.utils.util import missing_files, download_file, unzip, output_datasets, get_missing_files, gunzip, tsv_to_csv, \
     csv_to_tsv_gz_ext, request_features_tmdb
 
@@ -161,8 +161,13 @@ def retrieve_datasets() -> bool:
         dtype={'movieId': 'int32', 'tmdbId': 'float32'}
     )
     # Specify features to retrieve from https://developers.themoviedb.org/3/movies/get-movie-details
-    features = {'imdb_id', 'budget', 'revenue', 'adult', 'runtime'}
-    if not retrieve_tmdb(links, EXTERNAL_DIR, EXTERNAL_TMDB_CSV_NAMES, features, log=True):
-        return False
+    if USE_API:
+        features = {'imdb_id', 'budget', 'revenue', 'adult', 'runtime'}
+        if not retrieve_tmdb(links, EXTERNAL_DIR, EXTERNAL_TMDB_CSV_NAMES, features, log=True):
+            return False
+    else:
+        tmdb = pd.read_csv(TMDB_URL, encoding='utf-8')
+        filepath = os.path.join(EXTERNAL_DIR, EXTERNAL_TMDB_CSV_NAMES[0])
+        tmdb.to_csv(filepath, index=False, encoding='utf-8')
 
     return True

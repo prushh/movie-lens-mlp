@@ -3,6 +3,7 @@ from string import Template
 
 MOVIE_LENS_URL = 'https://files.grouplens.org/datasets/movielens/ml-latest.zip'
 TMDB_API_URL = Template('https://api.themoviedb.org/3/movie/${tmdb_id}?api_key=${api_key}')
+TMDB_URL = 'https://github.com/prushh/movie-lens-mlp/releases/download/api-dataset/tmdb.csv'
 IMDB_URL = 'https://datasets.imdbws.com/'
 
 DATA_DIR = 'data'
@@ -44,4 +45,5 @@ INTERIM_PARQUET_NAMES = [
     'tmdb.parquet'
 ]
 
+USE_API = False
 PLOT = False
