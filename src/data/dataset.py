@@ -1,15 +1,23 @@
+from typing import Tuple
+
+import numpy as np
 import pandas as pd
+import torch
 from torch.utils.data import Dataset
 
 
 class MovieDataset(Dataset):
     def __init__(self, df: pd.DataFrame):
-        self.df = df
+        target = 'rating_mean'
 
-    def __len__(self):
-        # return self.X.shape[0]
-        pass
+        X = df.loc[:, df.columns != target]
+        y = df[target]
 
-    def __getitem__(self, idx: int):
-        # return self.X[idx, :], self.y[idx]
-        pass
+        self.X = torch.FloatTensor(np.array(X))
+        self.y = torch.FloatTensor(y)
+
+    def __len__(self) -> int:
+        return self.X.shape[0]
+
+    def __getitem__(self, idx: int) -> Tuple:
+        return self.X[idx, :], self.y[idx]
