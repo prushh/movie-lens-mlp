@@ -43,7 +43,8 @@ INTERIM_PARQUET_NAMES = [
     'ratings.parquet',
     'tags.parquet',
     'title-basics.parquet',
-    'tmdb.parquet'
+    'tmdb.parquet',
+    'genome.parquet'
 ]
 
 SEED = 42
