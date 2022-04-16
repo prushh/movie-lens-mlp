@@ -216,3 +216,6 @@ fabric.properties
 
 # Ignore network checkpoints
 src/models/log/*
+
+# Ignore the data folder, the file system will be initialised on the first run
+data/*
