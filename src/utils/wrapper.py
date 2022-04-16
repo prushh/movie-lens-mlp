@@ -101,3 +101,14 @@ def extract_stat_feature(df: pd.DataFrame, by: List[str], column: str, stat: Lis
     """
     df_stat = df.groupby(by=by, as_index=False)[column].agg(stat)
     return df_stat
+
+
+def pivot(df: pd.DataFrame, **kwargs) -> pd.DataFrame:
+    """
+    Wrapper to DataFrame.pivot() function
+    :param df: DataFrame used in the pipe
+    :param kwargs:
+    :return: the Dataframe with specified index, columns and values
+    """
+    df_pivot = df.pivot(**kwargs)
+    return df_pivot

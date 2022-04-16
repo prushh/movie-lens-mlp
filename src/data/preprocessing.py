@@ -6,7 +6,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 from src.utils.util import missing_files
 from src.utils.wrapper import convert_to, fill_na, drop, drop_na, extract_stat_feature, reset_index, rename, \
-    replace
+    replace, pivot
 from src.utils.const import RAW_DIR, EXTERNAL_DIR, INTERIM_DIR, PROCESSED_DIR, INTERIM_PARQUET_NAMES
 
 
@@ -152,6 +152,32 @@ def tmdb_processing(filepath: str, imdb: pd.DataFrame) -> pd.DataFrame:
     return tmdb
 
 
+def genome_processing(filepath: str) -> pd.DataFrame:
+    if os.path.exists(filepath):
+        genome = pd.read_parquet(filepath)
+        return genome
+
+    genome_scores = pd.read_csv(
+        os.path.join(RAW_DIR, 'genome-scores.csv'),
+        encoding='utf-8',
+        dtype={'movieId': 'int32', 'tagId': 'int32', 'relevance': 'float32'}
+    )
+
+    genome_tags = pd.read_csv(
+        os.path.join(RAW_DIR, 'genome-tags.csv'),
+        encoding='utf-8',
+        dtype={'tagId': 'int32', 'tag': 'string'}
+    )
+
+    tags_relevance = genome_scores. \
+        pipe(pd.merge, genome_tags, on='tagId', how='left'). \
+        pipe(pivot, index='movieId', columns='tag', values='relevance'). \
+        pipe(reset_index)
+
+    tags_relevance.to_parquet(filepath)
+    return tags_relevance
+
+
 def preprocessing() -> pd.DataFrame:
     some_interim_missing = missing_files(INTERIM_DIR, INTERIM_PARQUET_NAMES)
 
@@ -170,6 +196,9 @@ def preprocessing() -> pd.DataFrame:
     filepath = os.path.join(INTERIM_DIR, 'tmdb.parquet')
     tmdb = tmdb_processing(filepath, imdb)
 
+    filepath = os.path.join(INTERIM_DIR, 'genome.parquet')
+    genome = genome_processing(filepath)
+
     filepath = os.path.join(PROCESSED_DIR, 'final.parquet')
     if os.path.exists(filepath) and not some_interim_missing:
         final = pd.read_parquet(filepath)
@@ -180,6 +209,7 @@ def preprocessing() -> pd.DataFrame:
         pipe(pd.merge, tags, on='movieId', how='left'). \
         pipe(fill_na, 'tag_count', 'zero'). \
         pipe(pd.merge, tmdb, on='movieId', how='inner'). \
+        pipe(pd.merge, genome, on='movieId', how='inner'). \
         pipe(drop, ['movieId'])
 
     final.to_parquet(filepath)
