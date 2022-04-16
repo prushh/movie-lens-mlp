@@ -213,3 +213,6 @@ fabric.properties
 
 !.idea/codeStyles
 !.idea/runConfigurations
+
+# Ignore network checkpoints
+src/models/log/*
