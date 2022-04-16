@@ -1,23 +1,27 @@
+import os
+import time
+
 import numpy as np
 import pandas as pd
 import torch
 from matplotlib import pyplot as plt
-from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from torch import nn
 from torch.utils.data import Subset, DataLoader
 
 from src.data.dataset import MovieDataset
-from src.utils.const import SEED
-import sklearn.metrics as sm
+from src.utils.const import SEED, LOG_DIR
 
 
 class Feedforward(nn.Module):
     def __init__(self, input_size, hidden_size):
         super(Feedforward, self).__init__()
+
         self.hid1 = nn.Linear(input_size, hidden_size)
-        self.hid2 = nn.Linear(hidden_size, hidden_size)
-        self.output = nn.Linear(hidden_size, 10)
+        self.hid2 = nn.Linear(hidden_size, 512)
+        self.hid3 = nn.Linear(512, hidden_size)
+        self.output = nn.Linear(hidden_size, 5)
+
         dropout = 0.4
         self.input_size = input_size
         self.model = nn.Sequential(
@@ -26,12 +30,16 @@ class Feedforward(nn.Module):
             nn.Dropout(dropout),
             self.hid2,
             nn.ReLU(),
+            self.hid3,
+            nn.ReLU(),
             self.output,
         )
         nn.init.xavier_uniform_(self.hid1.weight)
         nn.init.zeros_(self.hid1.bias)
         nn.init.xavier_uniform_(self.hid2.weight)
         nn.init.zeros_(self.hid2.bias)
+        nn.init.xavier_uniform_(self.hid3.weight)
+        nn.init.zeros_(self.hid3.bias)
         nn.init.xavier_uniform_(self.output.weight)
         nn.init.zeros_(self.output.bias)
 
@@ -39,10 +47,11 @@ class Feedforward(nn.Module):
         return self.model(x)
 
 
-def train_model(model, criterion, optimizer, epochs, data_loader, device):
+def train_model(model, criterion, optimizer, start_epoch, epochs, data_loader, device):
     model.train()
     loss_values = []
-    for epoch in range(epochs):
+    correct = 0
+    for epoch in range(start_epoch, epochs):
         for data, targets in data_loader:
             data, targets = data.to(device), targets.to(device)
             optimizer.zero_grad()
@@ -58,8 +67,34 @@ def train_model(model, criterion, optimizer, epochs, data_loader, device):
             # Backward pass
             loss.backward()
             optimizer.step()
+            # correct += (y_pred == targets).float().sum()
+            if epoch % 100 == 0:
+                dt = time.strftime("%Y_%m_%d-%H_%M_%S")
+
+                fn = "src\\models\\log\\" + str(dt) + str("-") + \
+                     str(epoch) + "_checkpoint.pt"
+
+                info_dict = {
+                    'epoch': epoch,
+                    'net_state': model.state_dict(),
+                    'optimizer_state': optimizer.state_dict()
+                }
+                torch.save(info_dict, fn)
+
+            # accuracy = 100 * correct / len(data_loader)
+            # trainset, not train_loader
+            # probably x in your case
+            # print("Accuracy = {}".format(accuracy))
 
     return model, loss_values
+
+
+def restore_train(filepath, model, optimizer):
+    chkpt = torch.load(filepath)
+    model.load_state_dict(chkpt['net_state'])
+    optimizer.load_state_dict(chkpt['optimizer_state'])
+    epoch_saved = chkpt['epoch'] + 1
+    return epoch_saved
 
 
 def test_model(model, data_loader, device):
@@ -90,9 +125,7 @@ def accuracy(model, data_loader, device):
         data, targets = data.to(device), targets.to(device)
         with torch.no_grad():
             oupt = model(data)  # logits form
-
         big_idx = torch.argmax(oupt)  # [0] [1] or [2]
-        print(f'big: {big_idx} == {targets}')
         if big_idx == targets:
             n_correct += 1
         else:
@@ -112,17 +145,20 @@ def split(data):
 def run_mlp(df: pd.DataFrame):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Device: {device}')
-
+    if not os.path.exists(LOG_DIR):
+        os.mkdir(LOG_DIR)
     dataset = MovieDataset(df)
-
-    # X_train, X_test, X_val = split(dataset.X)
-    # y_train, y_test, y_val = split(dataset.y)
 
     hidden_size = 64
     num_epochs = 10
     learning_rate = 0.001
     batch = 16
 
+    # Variable to be used to restore
+    restore = False
+    filename = '2022_04_16-11_12_51-0_checkpoint.pt'
+    # init of epoch start if not resuming
+    epoch_start = 0
     train_idx, val_idx = train_test_split(
         np.arange(len(dataset)), test_size=0.2, random_state=42)
     train_subset = Subset(dataset, train_idx)
@@ -130,20 +166,15 @@ def run_mlp(df: pd.DataFrame):
     train_loader = DataLoader(train_subset, batch_size=batch, shuffle=True)
     val_loader = DataLoader(val_subset, batch_size=1, shuffle=True)
 
-    # y_train = train_dataset.y[train_subset.indices].numpy()
-    # y_val = train_dataset.y[val_subset.indices].numpy()
-    # plt.subplot(1, 2, 1)
-    # plt.hist(y_train, bins=len(np.unique(y_train)), histtype='bar', ec='black')
-    # plt.subplot(1, 2, 2)
-    # plt.hist(y_val, bins=len(np.unique(y_val)), histtype='bar', ec='black')
-    # plt.show()
-
     model = Feedforward(dataset.X.shape[1], hidden_size)
+    model.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-    # test_model(model, val_loader, device)
-    # test_model(model, val_loader, device)
-    model, loss_values = train_model(model, criterion, optimizer, num_epochs, train_loader, device)
+
+    if restore:
+        filepath = os.path.join(LOG_DIR, filename)
+        epoch_start = restore_train(filepath, model, optimizer)
+    model, loss_values = train_model(model, criterion, optimizer, epoch_start, num_epochs, train_loader, device)
     print(accuracy(model, val_loader, device))
     plt.plot(loss_values)
     plt.title("Number of epochs: {}".format(num_epochs))
