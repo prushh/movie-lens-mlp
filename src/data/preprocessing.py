@@ -6,7 +6,7 @@ from sklearn.preprocessing import MultiLabelBinarizer
 
 from src.utils.util import missing_files
 from src.utils.wrapper import convert_to, fill_na, drop, drop_na, extract_stat_feature, reset_index, rename, \
-    replace, pivot
+    replace
 from src.utils.const import RAW_DIR, EXTERNAL_DIR, INTERIM_DIR, PROCESSED_DIR, INTERIM_PARQUET_NAMES
 
 
@@ -171,7 +171,7 @@ def genome_processing(filepath: str) -> pd.DataFrame:
 
     tags_relevance = genome_scores. \
         pipe(pd.merge, genome_tags, on='tagId', how='left'). \
-        pipe(pivot, index='movieId', columns='tag', values='relevance'). \
+        pipe(pd.pivot, index='movieId', columns='tag', values='relevance'). \
         pipe(reset_index)
 
     tags_relevance.to_parquet(filepath)
