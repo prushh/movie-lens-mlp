@@ -5,8 +5,7 @@ import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from src.utils.util import missing_files
-from src.utils.wrapper import convert_to, fill_na, drop, drop_na, extract_stat_feature, reset_index, rename, \
-    replace
+from src.utils.wrapper import fill_na, drop, reset_index
 from src.utils.const import RAW_DIR, EXTERNAL_DIR, INTERIM_DIR, PROCESSED_DIR, INTERIM_PARQUET_NAMES
 
 
@@ -108,10 +107,10 @@ def imdb_processing(filepath: str) -> pd.DataFrame:
         dtype={'tconst': 'string'}
     )
 
-    imdb = imdb. \
-        pipe(replace, 'runtimeMinutes', '([\\]*[a-zA-Z|\\-]+)', np.nan). \
-        pipe(convert_to, 'runtimeMinutes', 'float32'). \
-        pipe(rename, {'runtimeMinutes': 'runtime'})
+    imdb = (imdb
+            .replace(regex={'runtimeMinutes': '([\\]*[a-zA-Z|\\-]+)'}, value={'runtimeMinutes': np.nan})
+            .rename(columns={'runtimeMinutes': 'runtime'})
+            .astype({'runtime': 'float32'}))
 
     imdb.to_parquet(filepath)
     return imdb
@@ -133,11 +132,14 @@ def tmdb_processing(filepath: str, imdb: pd.DataFrame) -> pd.DataFrame:
         dtype={'movieId': 'int32', 'imdb_id': 'string', 'tmdbId': 'float32', 'runtime': 'float32'}
     )
 
-    tmdb = tmdb. \
-        pipe(pd.merge, imdb, how='left', left_on='imdb_id', right_on='tconst'). \
-        pipe(extract_correct_runtime). \
-        pipe(fill_na, 'runtime', 'median'). \
-        pipe(drop, ['tmdbId', 'imdb_id', 'tconst', 'runtime_x', 'runtime_y'])
+    tmdb = (tmdb
+            .merge(imdb, how='left', left_on='imdb_id', right_on='tconst')
+            .pipe(extract_correct_runtime))
+
+    # Cleaning
+    tmdb = (tmdb
+            .fillna({'runtime': tmdb['runtime'].median()})
+            .drop(columns=['tmdbId', 'imdb_id', 'tconst', 'runtime_x', 'runtime_y']))
 
     tmdb.to_parquet(filepath)
     return tmdb
