@@ -11,15 +11,6 @@ from src.utils.const import RAW_DIR, EXTERNAL_DIR, INTERIM_DIR, PROCESSED_DIR, I
 
 
 def movies_processing(filepath: str) -> pd.DataFrame:
-    def extract_year_from_title(df: pd.DataFrame) -> pd.DataFrame:
-        regex = '.*\\((\\d{4})\\).*'
-        df['year'] = df['title'].str.extract(pat=regex, expand=False)
-        return df
-
-    def extract_title_length(df: pd.DataFrame) -> pd.DataFrame:
-        df['title_length'] = df['title'].str.len()
-        return df
-
     def encode_genre(df: pd.DataFrame) -> pd.DataFrame:
         genres = df['genres'].str.split('|')
         mlb = MultiLabelBinarizer()
@@ -28,13 +19,11 @@ def movies_processing(filepath: str) -> pd.DataFrame:
             index=df['movieId'],
             columns=mlb.classes_
         )
-        df = pd.merge(df, encoded_genre, on='movieId', how='inner')
-        return df
+        return pd.merge(df, encoded_genre, on='movieId', how='inner')
 
     def remove_no_genres(df: pd.DataFrame) -> pd.DataFrame:
         df_no_genre = df[df['(no genres listed)'] == 1].index
-        df.drop(index=df_no_genre, inplace=True)
-        return df
+        return df.drop(index=df_no_genre)
 
     if os.path.exists(filepath):
         movies = pd.read_parquet(filepath)
@@ -46,15 +35,19 @@ def movies_processing(filepath: str) -> pd.DataFrame:
         dtype={'movieId': 'int32', 'title': 'string', 'genres': 'category'}
     )
 
-    movies = movies. \
-        pipe(extract_year_from_title). \
-        pipe(convert_to, 'year', 'float32'). \
-        pipe(fill_na, 'year', 'median'). \
-        pipe(extract_title_length). \
-        pipe(convert_to, 'title_length', 'int32'). \
-        pipe(encode_genre). \
-        pipe(remove_no_genres). \
-        pipe(drop, ['title', 'genres', '(no genres listed)'])
+    # Preprocessing
+    regex_year = '.*\\((\\d{4})\\).*'
+    movies = (movies
+              .assign(year=movies['title'].str.extract(pat=regex_year, expand=False),
+                      title_length=movies['title'].str.len())
+              .astype({'year': 'float32', 'title_length': 'int32'})
+              .pipe(encode_genre))
+
+    # Cleaning
+    movies = (movies
+              .fillna({'year': movies['year'].median()})
+              .pipe(remove_no_genres)
+              .drop(columns=['title', 'genres', '(no genres listed)']))
 
     movies.to_parquet(filepath)
     return movies
@@ -72,12 +65,10 @@ def tags_processing(filepath: str) -> pd.DataFrame:
         dtype={'movieId': 'int32', 'tag': 'string'}
     )
 
-    tags = tags. \
-        pipe(drop_na). \
-        pipe(extract_stat_feature, ['movieId'], 'tag', ['count']). \
-        pipe(reset_index). \
-        pipe(rename, {'count': 'tag_count'}). \
-        pipe(convert_to, 'tag_count', 'float32')
+    tags = (tags
+            .groupby(by='movieId', as_index=False)['tag'].agg('count')
+            .rename(columns={'tag': 'tag_count'})
+            .astype({'movieId': 'int32', 'tag_count': 'int32'}))
 
     tags.to_parquet(filepath)
     return tags
@@ -95,11 +86,11 @@ def ratings_processing(filepath: str) -> pd.DataFrame:
         dtype={'movieId': 'int32', 'rating': 'float32'}
     )
 
-    ratings = ratings. \
-        pipe(extract_stat_feature, ['movieId'], 'rating', ['count', 'mean']). \
-        pipe(reset_index). \
-        pipe(rename, {'count': 'rating_count', 'mean': 'rating_mean'}). \
-        pipe(convert_to, 'rating_count', 'int32')
+    ratings = (ratings
+               .groupby(by='movieId')['rating'].agg(['count', 'mean'])
+               .reset_index()
+               .rename(columns={'count': 'rating_count', 'mean': 'rating_mean'})
+               .astype({'movieId': 'int32', 'rating_count': 'int32'}))
 
     ratings.to_parquet(filepath)
     return ratings
