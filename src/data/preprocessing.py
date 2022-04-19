@@ -5,7 +5,6 @@ import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from src.utils.util import missing_files
-from src.utils.wrapper import fill_na, drop, reset_index
 from src.utils.const import RAW_DIR, EXTERNAL_DIR, INTERIM_DIR, PROCESSED_DIR, INTERIM_PARQUET_NAMES
 
 
