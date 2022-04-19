@@ -1,6 +1,7 @@
 import os
 from time import sleep
 from typing import List, Set
+from urllib.error import URLError
 
 import pandas as pd
 import requests
@@ -8,8 +9,8 @@ from dotenv import load_dotenv
 
 from src.utils.const import DATA_DIR, DATA_SUB_DIRS, RAW_CSV_NAMES, MOVIE_LENS_URL, IMDB_URL, EXTERNAL_IMDB_CSV_NAMES, \
     EXTERNAL_TMDB_CSV_NAMES, TMDB_API_URL, TMDB_URL, USE_API
-from src.utils.util import missing_files, download_file, unzip, output_datasets, get_missing_files, gunzip, tsv_to_csv, \
-    csv_to_tsv_gz_ext, request_features_tmdb
+from src.utils.util import missing_files, download_file, unzip, output_datasets, get_missing_files, gunzip, \
+    tsv_to_csv, csv_to_tsv_gz_ext, request_features_tmdb
 
 
 def retrieve_tmdb(df: pd.DataFrame, out_dir: str, dir_csv_names: List, features: Set[str],
@@ -26,7 +27,21 @@ def retrieve_tmdb(df: pd.DataFrame, out_dir: str, dir_csv_names: List, features:
     """
     to_download = missing_files(out_dir, dir_csv_names)
 
-    if to_download:
+    if to_download and not USE_API:
+        filepath = os.path.join(out_dir, EXTERNAL_TMDB_CSV_NAMES[0])
+        print(f'Some external TMDB data missing, download dataset from {os.path.dirname(TMDB_URL)}')
+        try:
+            tmdb = pd.read_csv(TMDB_URL, encoding='utf-8')
+        except URLError as e:
+            if log:
+                print(e)
+            print('Error, something went wrong during the download.')
+            return False
+        else:
+            tmdb.to_csv(filepath, index=False, encoding='utf-8')
+            filename = os.path.basename(TMDB_URL)
+            output_datasets([filename])
+    elif to_download:
         load_dotenv()
         token = os.environ.get('TMDB_API_KEY')
 
@@ -161,15 +176,8 @@ def retrieve_datasets() -> bool:
         dtype={'movieId': 'int32', 'tmdbId': 'float32'}
     )
     # Specify features to retrieve from https://developers.themoviedb.org/3/movies/get-movie-details
-    if USE_API:
-        features = {'imdb_id', 'budget', 'revenue', 'adult', 'runtime'}
-        if not retrieve_tmdb(links, EXTERNAL_DIR, EXTERNAL_TMDB_CSV_NAMES, features, log=True):
-            return False
-    else:
-        # TODO: in future update with try:except and print some messages
-        filepath = os.path.join(EXTERNAL_DIR, EXTERNAL_TMDB_CSV_NAMES[0])
-        if not os.path.exists(filepath):
-            tmdb = pd.read_csv(TMDB_URL, encoding='utf-8')
-            tmdb.to_csv(filepath, index=False, encoding='utf-8')
+    features = {'imdb_id', 'budget', 'revenue', 'adult', 'runtime'}
+    if not retrieve_tmdb(links, EXTERNAL_DIR, EXTERNAL_TMDB_CSV_NAMES, features):
+        return False
 
     return True

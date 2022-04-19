@@ -11,7 +11,6 @@ RAW_DIR = os.path.join(DATA_DIR, 'raw')
 EXTERNAL_DIR = os.path.join(DATA_DIR, 'external')
 INTERIM_DIR = os.path.join(DATA_DIR, 'interim')
 PROCESSED_DIR = os.path.join(DATA_DIR, 'processed')
-LOG_DIR = os.path.join('src', 'models', 'log')
 FIGURE_DIR = os.path.join('reports', 'figures')
 
 DATA_SUB_DIRS = [
@@ -43,8 +42,7 @@ INTERIM_PARQUET_NAMES = [
     'ratings.parquet',
     'tags.parquet',
     'title-basics.parquet',
-    'tmdb.parquet',
-    'genome.parquet'
+    'tmdb.parquet'
 ]
 
 SEED = 42
