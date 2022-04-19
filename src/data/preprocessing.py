@@ -5,21 +5,10 @@ import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
 
 from src.utils.util import missing_files
-from src.utils.wrapper import convert_to, fill_na, drop, drop_na, extract_stat_feature, reset_index, rename, \
-    replace
 from src.utils.const import RAW_DIR, EXTERNAL_DIR, INTERIM_DIR, PROCESSED_DIR, INTERIM_PARQUET_NAMES
 
 
 def movies_processing(filepath: str) -> pd.DataFrame:
-    def extract_year_from_title(df: pd.DataFrame) -> pd.DataFrame:
-        regex = '.*\\((\\d{4})\\).*'
-        df['year'] = df['title'].str.extract(pat=regex, expand=False)
-        return df
-
-    def extract_title_length(df: pd.DataFrame) -> pd.DataFrame:
-        df['title_length'] = df['title'].str.len()
-        return df
-
     def encode_genre(df: pd.DataFrame) -> pd.DataFrame:
         genres = df['genres'].str.split('|')
         mlb = MultiLabelBinarizer()
@@ -28,13 +17,11 @@ def movies_processing(filepath: str) -> pd.DataFrame:
             index=df['movieId'],
             columns=mlb.classes_
         )
-        df = pd.merge(df, encoded_genre, on='movieId', how='inner')
-        return df
+        return pd.merge(df, encoded_genre, on='movieId', how='inner')
 
     def remove_no_genres(df: pd.DataFrame) -> pd.DataFrame:
         df_no_genre = df[df['(no genres listed)'] == 1].index
-        df.drop(index=df_no_genre, inplace=True)
-        return df
+        return df.drop(index=df_no_genre)
 
     if os.path.exists(filepath):
         movies = pd.read_parquet(filepath)
@@ -46,15 +33,19 @@ def movies_processing(filepath: str) -> pd.DataFrame:
         dtype={'movieId': 'int32', 'title': 'string', 'genres': 'category'}
     )
 
-    movies = movies. \
-        pipe(extract_year_from_title). \
-        pipe(convert_to, 'year', 'float32'). \
-        pipe(fill_na, 'year', 'median'). \
-        pipe(extract_title_length). \
-        pipe(convert_to, 'title_length', 'int32'). \
-        pipe(encode_genre). \
-        pipe(remove_no_genres). \
-        pipe(drop, ['title', 'genres', '(no genres listed)'])
+    # Preprocessing
+    regex_year = '.*\\((\\d{4})\\).*'
+    movies = (movies
+              .assign(year=movies['title'].str.extract(pat=regex_year, expand=False),
+                      title_length=movies['title'].str.len())
+              .astype({'year': 'float32', 'title_length': 'int32'})
+              .pipe(encode_genre))
+
+    # Cleaning
+    movies = (movies
+              .fillna({'year': movies['year'].median()})
+              .pipe(remove_no_genres)
+              .drop(columns=['title', 'genres', '(no genres listed)']))
 
     movies.to_parquet(filepath)
     return movies
@@ -72,12 +63,10 @@ def tags_processing(filepath: str) -> pd.DataFrame:
         dtype={'movieId': 'int32', 'tag': 'string'}
     )
 
-    tags = tags. \
-        pipe(drop_na). \
-        pipe(extract_stat_feature, ['movieId'], 'tag', ['count']). \
-        pipe(reset_index). \
-        pipe(rename, {'count': 'tag_count'}). \
-        pipe(convert_to, 'tag_count', 'float32')
+    tags = (tags
+            .groupby(by='movieId', as_index=False)['tag'].agg('count')
+            .rename(columns={'tag': 'tag_count'})
+            .astype({'movieId': 'int32', 'tag_count': 'int32'}))
 
     tags.to_parquet(filepath)
     return tags
@@ -95,11 +84,11 @@ def ratings_processing(filepath: str) -> pd.DataFrame:
         dtype={'movieId': 'int32', 'rating': 'float32'}
     )
 
-    ratings = ratings. \
-        pipe(extract_stat_feature, ['movieId'], 'rating', ['count', 'mean']). \
-        pipe(reset_index). \
-        pipe(rename, {'count': 'rating_count', 'mean': 'rating_mean'}). \
-        pipe(convert_to, 'rating_count', 'int32')
+    ratings = (ratings
+               .groupby(by='movieId')['rating'].agg(['count', 'mean'])
+               .reset_index()
+               .rename(columns={'count': 'rating_count', 'mean': 'rating_mean'})
+               .astype({'movieId': 'int32', 'rating_count': 'int32'}))
 
     ratings.to_parquet(filepath)
     return ratings
@@ -117,10 +106,10 @@ def imdb_processing(filepath: str) -> pd.DataFrame:
         dtype={'tconst': 'string'}
     )
 
-    imdb = imdb. \
-        pipe(replace, 'runtimeMinutes', '([\\]*[a-zA-Z|\\-]+)', np.nan). \
-        pipe(convert_to, 'runtimeMinutes', 'float32'). \
-        pipe(rename, {'runtimeMinutes': 'runtime'})
+    imdb = (imdb
+            .replace(regex={'runtimeMinutes': '([\\]*[a-zA-Z|\\-]+)'}, value={'runtimeMinutes': np.nan})
+            .rename(columns={'runtimeMinutes': 'runtime'})
+            .astype({'runtime': 'float32'}))
 
     imdb.to_parquet(filepath)
     return imdb
@@ -142,14 +131,44 @@ def tmdb_processing(filepath: str, imdb: pd.DataFrame) -> pd.DataFrame:
         dtype={'movieId': 'int32', 'imdb_id': 'string', 'tmdbId': 'float32', 'runtime': 'float32'}
     )
 
-    tmdb = tmdb. \
-        pipe(pd.merge, imdb, how='left', left_on='imdb_id', right_on='tconst'). \
-        pipe(extract_correct_runtime). \
-        pipe(fill_na, 'runtime', 'median'). \
-        pipe(drop, ['tmdbId', 'imdb_id', 'tconst', 'runtime_x', 'runtime_y'])
+    tmdb = (tmdb
+            .merge(imdb, how='left', left_on='imdb_id', right_on='tconst')
+            .pipe(extract_correct_runtime))
+
+    # Cleaning
+    tmdb = (tmdb
+            .fillna({'runtime': tmdb['runtime'].median()})
+            .drop(columns=['tmdbId', 'imdb_id', 'tconst', 'runtime_x', 'runtime_y']))
 
     tmdb.to_parquet(filepath)
     return tmdb
+
+
+def genome_processing(filepath: str) -> pd.DataFrame:
+    if os.path.exists(filepath):
+        genome = pd.read_parquet(filepath)
+        return genome
+
+    genome_scores = pd.read_csv(
+        os.path.join(RAW_DIR, 'genome-scores.csv'),
+        encoding='utf-8',
+        dtype={'movieId': 'int32', 'tagId': 'int32', 'relevance': 'float32'}
+    )
+
+    genome_tags = pd.read_csv(
+        os.path.join(RAW_DIR, 'genome-tags.csv'),
+        encoding='utf-8',
+        dtype={'tagId': 'int32', 'tag': 'string'}
+    )
+
+    tags_relevance = (genome_scores
+                      .merge(genome_tags, on='tagId', how='left')
+                      .pivot(index='movieId', columns='tag', values='relevance')
+                      .reset_index()
+                      .astype({'movieId': 'int32'}))
+
+    tags_relevance.to_parquet(filepath)
+    return tags_relevance
 
 
 def preprocessing() -> pd.DataFrame:
@@ -170,17 +189,24 @@ def preprocessing() -> pd.DataFrame:
     filepath = os.path.join(INTERIM_DIR, 'tmdb.parquet')
     tmdb = tmdb_processing(filepath, imdb)
 
+    filepath = os.path.join(INTERIM_DIR, 'genome.parquet')
+    genome = genome_processing(filepath)
+
     filepath = os.path.join(PROCESSED_DIR, 'final.parquet')
     if os.path.exists(filepath) and not some_interim_missing:
         final = pd.read_parquet(filepath)
         return final
 
-    final = movies. \
-        pipe(pd.merge, ratings, on='movieId', how='inner'). \
-        pipe(pd.merge, tags, on='movieId', how='left'). \
-        pipe(fill_na, 'tag_count', 'zero'). \
-        pipe(pd.merge, tmdb, on='movieId', how='inner'). \
-        pipe(drop, ['movieId'])
+    final = (movies
+             .merge(ratings, on='movieId', how='inner')
+             .merge(tags, on='movieId', how='left')
+             .merge(tmdb, on='movieId', how='inner')
+             .merge(genome, on='movieId', how='inner'))
+
+    # Cleaning
+    final = (final
+             .fillna({'tag_count': 0})
+             .drop(columns='movieId'))
 
     final.to_parquet(filepath)
     return final
