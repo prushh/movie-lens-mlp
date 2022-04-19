@@ -162,10 +162,11 @@ def genome_processing(filepath: str) -> pd.DataFrame:
         dtype={'tagId': 'int32', 'tag': 'string'}
     )
 
-    tags_relevance = genome_scores. \
-        pipe(pd.merge, genome_tags, on='tagId', how='left'). \
-        pipe(pd.pivot, index='movieId', columns='tag', values='relevance'). \
-        pipe(reset_index)
+    tags_relevance = (genome_scores
+                      .merge(genome_tags, on='tagId', how='left')
+                      .pivot(index='movieId', columns='tag', values='relevance')
+                      .reset_index()
+                      .astype({'movieId': 'int32'}))
 
     tags_relevance.to_parquet(filepath)
     return tags_relevance
@@ -197,13 +198,16 @@ def preprocessing() -> pd.DataFrame:
         final = pd.read_parquet(filepath)
         return final
 
-    final = movies. \
-        pipe(pd.merge, ratings, on='movieId', how='inner'). \
-        pipe(pd.merge, tags, on='movieId', how='left'). \
-        pipe(fill_na, 'tag_count', 'zero'). \
-        pipe(pd.merge, tmdb, on='movieId', how='inner'). \
-        pipe(pd.merge, genome, on='movieId', how='inner'). \
-        pipe(drop, ['movieId'])
+    final = (movies
+             .merge(ratings, on='movieId', how='inner')
+             .merge(tags, on='movieId', how='left')
+             .merge(tmdb, on='movieId', how='inner')
+             .merge(genome, on='movieId', how='inner'))
+
+    # Cleaning
+    final = (final
+             .fillna({'tag_count': 0})
+             .drop(columns='movieId'))
 
     final.to_parquet(filepath)
     return final
