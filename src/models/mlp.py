@@ -6,6 +6,7 @@ import pandas as pd
 import torch
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from torch import nn
 from torch.utils.data import Subset, DataLoader
 
@@ -14,13 +15,13 @@ from src.utils.const import SEED, LOG_DIR
 
 
 class Feedforward(nn.Module):
-    def __init__(self, input_size, hidden_size):
+    def __init__(self, input_size, hidden_size, output_size):
         super(Feedforward, self).__init__()
 
         self.hid1 = nn.Linear(input_size, hidden_size)
         self.hid2 = nn.Linear(hidden_size, 512)
         self.hid3 = nn.Linear(512, hidden_size)
-        self.output = nn.Linear(hidden_size, 5)
+        self.output = nn.Linear(hidden_size, output_size)
 
         dropout = 0.4
         self.input_size = input_size
@@ -149,24 +150,39 @@ def run_mlp(df: pd.DataFrame):
         os.mkdir(LOG_DIR)
     dataset = MovieDataset(df)
 
+    input_size = dataset.X.shape[1]
     hidden_size = 64
-    num_epochs = 10
+    output_size = dataset.num_classes
+    num_epochs = 100
     learning_rate = 0.001
-    batch = 16
+    batch = 128
 
     # Variable to be used to restore
     restore = False
     filename = '2022_04_16-11_12_51-0_checkpoint.pt'
     # init of epoch start if not resuming
     epoch_start = 0
-    train_idx, val_idx = train_test_split(
-        np.arange(len(dataset)), test_size=0.2, random_state=42)
+
+    train_idx, test_idx = train_test_split(np.arange(len(dataset)), test_size=0.2, stratify=dataset.y)
+    train_idx, val_idx = train_test_split(train_idx, test_size=0.1, stratify=dataset.y[train_idx])
+
+    scaler = MinMaxScaler()
+    # scaler = StandardScaler()
+    features = [
+        dataset.map_columns['year'],
+        dataset.map_columns['title_length'],
+        dataset.map_columns['runtime'],
+        dataset.map_columns['rating_count']
+    ]
+    dataset.scale(train_idx, test_idx, val_idx, scaler, features)
+    # dataset.normalize(train_idx)
+
     train_subset = Subset(dataset, train_idx)
     val_subset = Subset(dataset, val_idx)
     train_loader = DataLoader(train_subset, batch_size=batch, shuffle=True)
     val_loader = DataLoader(val_subset, batch_size=1, shuffle=True)
 
-    model = Feedforward(dataset.X.shape[1], hidden_size)
+    model = Feedforward(input_size, hidden_size, output_size)
     model.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
