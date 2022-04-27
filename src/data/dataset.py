@@ -55,8 +55,15 @@ class MovieDataset(Dataset):
             self.X[test_idx, feature] = torch.tensor(scaled_test, dtype=torch.float)
             self.X[val_idx, feature] = torch.tensor(scaled_val, dtype=torch.float)
 
-    def normalize(self, train_idx, norm: str = 'l2'):
+    def normalize(self, train_idx, test_idx, val_idx, norm: str = 'l2'):
         train_data = self.X[train_idx]
+        test_data = self.X[test_idx]
+        val_data = self.X[val_idx]
 
         norm_train = normalize(train_data, norm=norm)
+        norm_test = normalize(test_data, norm=norm)
+        norm_val = normalize(val_data, norm=norm)
+
         self.X[train_idx, :] = torch.tensor(norm_train, dtype=torch.float)
+        self.X[test_idx, :] = torch.tensor(norm_test, dtype=torch.float)
+        self.X[val_idx, :] = torch.tensor(norm_val, dtype=torch.float)
