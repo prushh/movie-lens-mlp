@@ -5,13 +5,14 @@ import numpy as np
 import pandas as pd
 import torch
 from matplotlib import pyplot as plt
+from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from torch import nn
-from torch.utils.data import Subset, DataLoader
+from torch.utils.data import Subset, DataLoader, WeightedRandomSampler
 
 from src.data.dataset import MovieDataset
-from src.utils.const import SEED, LOG_DIR
+from src.utils.const import LOG_DIR
 
 
 class Feedforward(nn.Module):
@@ -114,7 +115,8 @@ def test_model(model, data_loader, device):
     # mean_squared_error(np.array(y_test), np.array(y_pred))
     # print("R2 score =", round(sm.r2_score(y_test, y_pred), 2))
     score = torch.sum((y_pred.squeeze() == y_test).float()) / y_test.shape[0]
-    print('Test score', score.numpy())
+    print('Test score', score.cpu().numpy())
+    print(classification_report(y_test.cpu(), y_pred.cpu()))
 
 
 def accuracy(model, data_loader, device):
@@ -134,13 +136,6 @@ def accuracy(model, data_loader, device):
 
     acc = (n_correct * 1.0) / (n_correct + n_wrong)
     return acc
-
-
-def split(data):
-    train_tmp, test = train_test_split(data, test_size=0.2, random_state=SEED)
-    train, val = train_test_split(train_tmp, test_size=0.1, random_state=SEED)
-
-    return train, test, val
 
 
 def run_mlp(df: pd.DataFrame):
@@ -175,11 +170,19 @@ def run_mlp(df: pd.DataFrame):
         dataset.map_columns['rating_count']
     ]
     dataset.scale(train_idx, test_idx, val_idx, scaler, features)
-    # dataset.normalize(train_idx)
+    dataset.normalize(train_idx, test_idx, val_idx)
+
+    train_target = dataset.y[train_idx]
+
+    counts = np.bincount(train_target)
+    labels_weights = 1. / counts
+    weights = torch.tensor(labels_weights[train_target], dtype=torch.float)
+    sampler = WeightedRandomSampler(weights, len(weights), replacement=True)
 
     train_subset = Subset(dataset, train_idx)
     val_subset = Subset(dataset, val_idx)
-    train_loader = DataLoader(train_subset, batch_size=batch, shuffle=True)
+
+    train_loader = DataLoader(train_subset, batch_size=batch, sampler=sampler, shuffle=False)
     val_loader = DataLoader(val_subset, batch_size=1, shuffle=True)
 
     model = Feedforward(input_size, hidden_size, output_size)
@@ -192,6 +195,7 @@ def run_mlp(df: pd.DataFrame):
         epoch_start = restore_train(filepath, model, optimizer)
     model, loss_values = train_model(model, criterion, optimizer, epoch_start, num_epochs, train_loader, device)
     print(accuracy(model, val_loader, device))
+    test_model(model, val_loader, device)
     plt.plot(loss_values)
     plt.title("Number of epochs: {}".format(num_epochs))
     plt.show()
