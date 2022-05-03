@@ -1,6 +1,6 @@
+import itertools
 import os
-import random
-from typing import Tuple, Callable, Dict
+from typing import Dict
 
 from timeit import default_timer as timer
 import numpy as np
@@ -16,19 +16,25 @@ from torch.utils import tensorboard
 from torch.optim import lr_scheduler
 
 from src.data.dataset import MovieDataset
+from src.models.network.config import parameters
+from src.models.network.train import train
+from src.models.network.validate import validate
+from src.utils.util_models import fix_random
 
 
 class MovieNet(nn.Module):
-    def __init__(self,
-                 input_size: int,
-                 input_act: nn.Module,
-                 hidden_size: int,
-                 hidden_act: nn.Module,
-                 num_hidden_layers: int,
-                 output_fn,
-                 num_classes: int,
-                 dropout: float = 0.0,
-                 batch_norm: bool = False):
+    def __init__(
+            self,
+            input_size: int,
+            input_act: nn.Module,
+            hidden_size: int,
+            hidden_act: nn.Module,
+            num_hidden_layers: int,
+            output_fn,
+            num_classes: int,
+            dropout: float = 0.0,
+            batch_norm: bool = False
+    ) -> None:
         super(MovieNet, self).__init__()
 
         self.layers = nn.ModuleList([
@@ -63,128 +69,18 @@ class MovieNet(nn.Module):
                 layer.reset_parameters()
 
 
-def fix_random(seed: int) -> None:
-    """
-    Fix all the possible sources of randomness
-    :param seed: the seed to use
-    :return: None
-    """
-    np.random.seed(seed)
-    random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-
-    torch.backends.cudnn.benchmark = False
-    torch.backends.cudnn.deterministic = True
-
-
-def get_correct_samples(scores: torch.Tensor, labels: torch.Tensor) -> int:
-    """
-    Gets the number of correctly classified examples
-    :param scores: the scores predicted with the network
-    :param labels: the class labels
-    :return: the number of correct samples
-    """
-    classes_predicted = torch.argmax(scores, 1)
-    return (classes_predicted == labels).sum().item()
-
-
-# Train one epoch
-def train(writer: tensorboard.SummaryWriter,
-          model: nn.Module,
-          train_loader: utils.data.DataLoader,
-          device: torch.device,
-          optimizer: torch.optim,
-          criterion: Callable[[torch.Tensor, torch.Tensor], float],
-          log_interval: int,
-          epoch: int) -> Tuple[float, float]:
-    """
-    Trains a neural network for one epoch
-    :param writer: the summary writer for tensorboard
-    :param model: the model to train
-    :param train_loader: the data loader containing the training data
-    :param device: the device to use to train the model
-    :param optimizer: the optimizer to use to train the model
-    :param criterion: the loss to optimize
-    :param log_interval: the log interval
-    :param epoch: the number of the current epoch
-    :return: the cross entropy Loss value and the accuracy on the training data.
-    """
-    correct = 0
-    samples_train = 0
-    loss_train = 0
-    num_batches = len(train_loader)
-
-    model.train()
-    for idx_batch, (data, targets) in enumerate(train_loader):
-        data, targets = data.to(device), targets.to(device)
-        optimizer.zero_grad()
-        scores = model(data)
-
-        loss = criterion(scores, targets)
-        loss_train += loss.item() * len(data)
-        samples_train += len(data)
-
-        loss.backward()
-        optimizer.step()
-        correct += get_correct_samples(scores, targets)
-
-        if log_interval > 0:
-            if idx_batch % log_interval == 0:
-                running_loss = loss_train / samples_train
-                global_step = idx_batch + (epoch * num_batches)
-                writer.add_scalar('Metrics/Loss_Train_IT', running_loss, global_step)
-                # # Visualize images on tensorboard
-                # indices_random = torch.randperm(images.size(0))[:4]
-                # writer.add_images('Samples/Train', denormalize(images[indices_random]), global_step)
-
-    loss_train /= samples_train
-    accuracy_training = 100. * correct / samples_train
-    return loss_train, accuracy_training
-
-
-# Validate one epoch
-def validate(model: nn.Module,
-             data_loader: utils.data.DataLoader,
-             device: torch.device,
-             criterion: Callable[[torch.Tensor, torch.Tensor], float]) -> Tuple[float, float]:
-    """
-    Evaluates the model
-    :param model: the model to evaluate
-    :param data_loader: the data loader containing the validation or test data
-    :param device: the device to use to evaluate the model
-    :param criterion: the loss function
-    :return: the loss value and the accuracy on the validation data
-    """
-    correct = 0
-    samples_val = 0
-    loss_val = 0.
-    model = model.eval()
-    with torch.no_grad():
-        for idx_batch, (data, targets) in enumerate(data_loader):
-            data, targets = data.to(device), targets.to(device)
-            scores = model(data)
-
-            loss = criterion(scores, targets)
-            loss_val += loss.item() * len(data)
-            samples_val += len(data)
-            correct += get_correct_samples(scores, targets)
-
-    loss_val /= samples_val
-    accuracy = 100. * correct / samples_val
-    return loss_val, accuracy
-
-
-def training_loop(writer: tensorboard.SummaryWriter,
-                  num_epochs: int,
-                  optimizer: torch.optim,
-                  scheduler: torch.optim.lr_scheduler,
-                  log_interval: int,
-                  model: nn.Module,
-                  loader_train: utils.data.DataLoader,
-                  loader_val: utils.data.DataLoader,
-                  device: torch.device,
-                  verbose: bool = True) -> Dict:
+def training_loop(
+        writer: tensorboard.SummaryWriter,
+        num_epochs: int,
+        optimizer: torch.optim,
+        scheduler: torch.optim.lr_scheduler,
+        log_interval: int,
+        model: nn.Module,
+        loader_train: utils.data.DataLoader,
+        loader_val: utils.data.DataLoader,
+        device: torch.device,
+        verbose: bool = True
+) -> Dict:
     """
     Executes the training loop
     :param writer: the summary writer for tensorboard
@@ -247,13 +143,15 @@ def training_loop(writer: tensorboard.SummaryWriter,
             'time': time_loop}
 
 
-def execute(name_train: str,
-            network: nn.Module,
-            starting_lr: float,
-            num_epochs: int,
-            data_loader_train: torch.utils.data.DataLoader,
-            data_loader_val: torch.utils.data.DataLoader,
-            device: torch.device) -> None:
+def execute(
+        name_train: str,
+        network: nn.Module,
+        starting_lr: float,
+        num_epochs: int,
+        data_loader_train: torch.utils.data.DataLoader,
+        data_loader_val: torch.utils.data.DataLoader,
+        device: torch.device
+) -> None:
     """
     Executes the training loop
     :param name_train: the name for the log sub-folder
@@ -272,7 +170,7 @@ def execute(name_train: str,
     writer = tensorboard.SummaryWriter(log_dir)
 
     # Optimization
-    optimizer = optim.Adam(network.parameters(), lr=starting_lr)
+    optimizer = optim.Adam(network.parameters(), lr=starting_lr, weight_decay=0.000001)
 
     # Learning Rate schedule: decays the learning rate by a factor of `gamma`
     # every `step_size` epochs
@@ -289,11 +187,10 @@ def execute(name_train: str,
     print(f'Best val accuracy: {best_accuracy:.2f} epoch: {best_epoch}.')
 
 
-def run_mlp(df: pd.DataFrame):
+def mlp(df: pd.DataFrame):
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    '''
     if device.type == 'cuda':
-        print('Using device:', torch.cuda.get_device_name(device))'''
+        print('Using device:', torch.cuda.get_device_name(device))
 
     fix_random(42)
     dataset = MovieDataset(df)
@@ -302,11 +199,11 @@ def run_mlp(df: pd.DataFrame):
 
     scaler = preprocessing.MinMaxScaler()
     features = [
-        dataset.map_columns['year'],
-        dataset.map_columns['title_length'],
-        dataset.map_columns['tag_count'],
-        dataset.map_columns['runtime'],
-        dataset.map_columns['rating_count']
+        dataset.idx_column['year'],
+        dataset.idx_column['title_length'],
+        dataset.idx_column['tag_count'],
+        dataset.idx_column['runtime'],
+        dataset.idx_column['rating_count']
     ]
     dataset.scale(train_idx, test_idx, val_idx, scaler, features)
     dataset.normalize(train_idx, test_idx, val_idx)
@@ -317,35 +214,47 @@ def run_mlp(df: pd.DataFrame):
     weights = torch.tensor(labels_weights[train_target], dtype=torch.float)
     sampler = utils.data.WeightedRandomSampler(weights, len(weights), replacement=True)
 
-    data_train = utils.data.Subset(dataset, train_idx)
-    data_val = utils.data.Subset(dataset, val_idx)
+    hyper_parameters_model = itertools.product(
+        parameters['input_act'],
+        parameters['hidden_act'],
+        parameters['dropout'],
+        parameters['batch_norm']
+    )
+    # parameters['output_fn']
 
-    num_workers = 2
-    size_batch = 64
-    loader_train = utils.data.DataLoader(data_train, batch_size=size_batch,
-                                         sampler=sampler,
-                                         pin_memory=True,
-                                         num_workers=num_workers)
-    loader_val = utils.data.DataLoader(data_val, batch_size=size_batch,
-                                       shuffle=False,
-                                       num_workers=num_workers)
+    for idx, (input_act, hidden_act, dropout, batch_norm) in enumerate(hyper_parameters_model):
+        data_train = utils.data.Subset(dataset, train_idx)
+        data_val = utils.data.Subset(dataset, val_idx)
 
-    input_size = dataset.X.shape[1]
-    hidden_size = 64
-    num_classes = dataset.num_classes
-    network = MovieNet(input_size=input_size,
-                       input_act=nn.LeakyReLU(),
-                       hidden_size=hidden_size,
-                       hidden_act=nn.LeakyReLU(),
-                       num_hidden_layers=3,
-                       dropout=0.5,
-                       output_fn=None,
-                       num_classes=num_classes)
-    network.reset_weights()
-    network.to(device)
-    summary(network)
+        num_workers = 2
+        batch_size = 64
+        loader_train = utils.data.DataLoader(data_train, batch_size=batch_size,
+                                             sampler=sampler,
+                                             pin_memory=True,
+                                             num_workers=num_workers)
 
-    name_train = 'movie_net'
-    lr = 0.001
-    num_epochs = 100
-    execute(name_train, network, lr, num_epochs, loader_train, loader_val, device)
+        loader_val = utils.data.DataLoader(data_val, batch_size=1,
+                                           shuffle=False,
+                                           num_workers=num_workers)
+
+        input_size = dataset.X.shape[1]
+        hidden_size = 512
+        num_classes = dataset.num_classes
+        network = MovieNet(input_size=input_size,
+                           input_act=input_act,
+                           hidden_size=hidden_size,
+                           hidden_act=hidden_act,
+                           num_hidden_layers=1,
+                           dropout=dropout,
+                           output_fn=None,
+                           num_classes=num_classes)
+        network.reset_weights()
+        network.to(device)
+        print('=' * 65)
+        print(f'Configuration [{idx}]: {(input_act, hidden_act, dropout, batch_norm)}')
+        summary(network)
+
+        name_train = f'movie_net_experiment_{idx}'
+        lr = 0.001
+        num_epochs = 25
+        execute(name_train, network, lr, num_epochs, loader_train, loader_val, device)
