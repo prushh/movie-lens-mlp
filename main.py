@@ -1,5 +1,6 @@
 from src.data.preprocessing import preprocessing
 from src.data.acquisition import retrieve_datasets
+from src.models.network.mlp import mlp
 
 
 def main() -> int:
@@ -8,8 +9,7 @@ def main() -> int:
 
     final = preprocessing()
 
-    print(final.info())
-    print(final.head())
+    mlp(final)
 
 
 if __name__ == '__main__':
