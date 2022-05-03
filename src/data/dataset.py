@@ -9,9 +9,9 @@ from torch.utils.data import Dataset
 
 class MovieDataset(Dataset):
     def __init__(self, df: pd.DataFrame):
-        self.map_columns = {}
+        self.idx_column = {}
         for idx, col_name in enumerate(df.columns):
-            self.map_columns[col_name] = idx
+            self.idx_column[col_name] = idx
 
         X, y_continuous = self.data_target_split(df)
 

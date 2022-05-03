@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 from src.utils.const import DATA_DIR, DATA_SUB_DIRS, RAW_CSV_NAMES, MOVIE_LENS_URL, IMDB_URL, EXTERNAL_IMDB_CSV_NAMES, \
     EXTERNAL_TMDB_CSV_NAMES, TMDB_API_URL, TMDB_URL, USE_API
-from src.utils.util import missing_files, download_file, unzip, output_datasets, get_missing_files, gunzip, \
+from src.utils.util_data import missing_files, download_file, unzip, output_datasets, get_missing_files, gunzip, \
     tsv_to_csv, csv_to_tsv_gz_ext, request_features_tmdb
 
 
