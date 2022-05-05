@@ -8,3 +8,36 @@ parameters = {
     'batch_norm': [False, True],
     'output_fn': [None, nn.Softmax()]
 }
+
+param_grid_svc = {
+    'C': [0.1, 1, 10, 100],
+    'gamma': [1, 0.1, 0.01, 0.001],
+    'kernel': ['rbf', 'poly', 'sigmoid']
+}
+
+param_grid_nb = {
+    'var_smoothing': np.logspace(0, -9, num=100)
+}
+
+param_grid_qda = {
+    'reg_param': [0.00001, 0.0001, 0.001, 0.01, 0.1],
+    'tol': [0.0001, 0.001, 0.01, 0.1],
+}
+
+param_grid_tree = {
+    'criterion': ['gini', 'entropy'],
+    'max_depth': np.arange(5, 20, 5)
+}
+
+param_grid_forest = {
+    'n_estimators': np.arange(100, 1000, 200),
+    'max_features': ['sqrt', 'log2'],
+    'max_depth': [4]
+}
+
+param_grid_boosting = {
+    'n_estimators': np.arange(100, 1000, 200),
+    'max_features': [None, 'sqrt', 'log2'],
+    'max_depth': np.arange(5, 20, 5),
+    'learning_rate': [0.01, 0.5, 1.0]
+}

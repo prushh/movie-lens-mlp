@@ -14,7 +14,8 @@ from sklearn.preprocessing import MinMaxScaler, Normalizer
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
-from src.models.config import param_grid_tree, param_grid_forest, param_grid_boosting, param_grid_svc, param_grid_nb
+from src.models.config import param_grid_tree, param_grid_forest, param_grid_boosting, param_grid_svc, param_grid_nb, \
+    param_grid_qda
 from src.utils.const import NUM_BINS
 
 
@@ -85,8 +86,8 @@ def fit_model(df: pd.DataFrame, model_name: str):
 
     param_grid_model = {
         'tree_based': [
-            (DecisionTreeClassifier(class_weight=class_weight), param_grid_tree),
             (RandomForestClassifier(class_weight=class_weight), param_grid_forest),
+            (DecisionTreeClassifier(class_weight=class_weight), param_grid_tree),
             (GradientBoostingClassifier(), param_grid_boosting)
         ],
         'svm': [
@@ -94,7 +95,7 @@ def fit_model(df: pd.DataFrame, model_name: str):
         ],
         'naive_bayes': [
             (GaussianNB(), param_grid_nb),
-            (QuadraticDiscriminantAnalysis(), param_grid_nb)
+            (QuadraticDiscriminantAnalysis(), param_grid_qda)
         ]
     }
 
