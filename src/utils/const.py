@@ -12,6 +12,7 @@ EXTERNAL_DIR = os.path.join(DATA_DIR, 'external')
 INTERIM_DIR = os.path.join(DATA_DIR, 'interim')
 PROCESSED_DIR = os.path.join(DATA_DIR, 'processed')
 FIGURE_DIR = os.path.join('reports', 'figures')
+LOG_DIR = os.path.join('src', 'models', 'log')
 
 DATA_SUB_DIRS = [
     'external',
