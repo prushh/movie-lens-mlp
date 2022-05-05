@@ -6,6 +6,8 @@ import torch
 from sklearn.preprocessing import normalize
 from torch.utils.data import Dataset
 
+from src.utils.const import NUM_BINS
+
 
 class MovieDataset(Dataset):
     def __init__(self, df: pd.DataFrame):
@@ -15,7 +17,7 @@ class MovieDataset(Dataset):
 
         X, y_continuous = self.data_target_split(df)
 
-        self.num_classes = 10
+        self.num_classes = NUM_BINS
         y = self._discretize(y_continuous)
 
         self.X = torch.tensor(X, dtype=torch.float)

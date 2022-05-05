@@ -16,7 +16,7 @@ from torch.utils import tensorboard
 from torch.optim import lr_scheduler
 
 from src.data.dataset import MovieDataset
-from src.models.network.config import parameters
+from src.models.config import parameters
 from src.models.network.train import train
 from src.models.network.validate import validate
 from src.utils.util_models import fix_random
