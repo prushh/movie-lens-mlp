@@ -46,6 +46,7 @@ INTERIM_PARQUET_NAMES = [
     'tmdb.parquet'
 ]
 
+NUM_BINS = 10
 SEED = 42
 USE_API = False
 PLOT = False

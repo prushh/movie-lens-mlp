@@ -219,3 +219,6 @@ src/models/log/*
 
 # Ignore the data folder, the file system will be initialised on the first run
 data/*
+
+# Ignore the tensorboard log folder
+src/models/network/logs/*
