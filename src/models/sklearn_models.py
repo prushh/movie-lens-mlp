@@ -1,30 +1,32 @@
 import pickle
-from collections import Counter
 from typing import Tuple
 
-import joblib
 import numpy as np
 import pandas as pd
 from imblearn.combine import SMOTETomek
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import TomekLinks
 from sklearn.compose import ColumnTransformer
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.metrics import zero_one_loss
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.naive_bayes import GaussianNB
+from sklearn.metrics import zero_one_loss, accuracy_score
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler, Normalizer
-from sklearn.svm import SVC
-from sklearn.tree import DecisionTreeClassifier
 
-from src.models.config import param_grid_tree, param_grid_forest, param_grid_boosting, param_grid_svc, param_grid_nb, \
-    param_grid_qda
+from src.models.config import param_grid_model
 from src.utils.const import NUM_BINS
 
 
-def preprocess(train_data: np.ndarray, test_data: np.ndarray) -> Tuple:
+def balance(train_data: pd.DataFrame, train_target: pd.Series) -> Tuple:
+    k_neighbors = np.min(train_target.value_counts()) - 1
+
+    smt = SMOTETomek(smote=SMOTE(k_neighbors=k_neighbors),
+                     tomek=TomekLinks(sampling_strategy='majority'))
+    train_data_smt, train_target_smt = smt.fit_resample(train_data, train_target)
+
+    return train_data_smt, train_target_smt
+
+
+def preprocess(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Tuple:
     features = [
         'year',
         'title_length',
@@ -53,7 +55,7 @@ def preprocess(train_data: np.ndarray, test_data: np.ndarray) -> Tuple:
     return train_data_proc, test_data_proc
 
 
-def fit_model(df: pd.DataFrame, model_name: str, refit_model: bool = False):
+def fit_model(df: pd.DataFrame, model_group: str):
     df = (df
           .assign(rating_discrete=pd.cut(df.loc[:, 'rating_mean'], bins=NUM_BINS, labels=False))
           .astype({'rating_discrete': 'int32'})
@@ -62,67 +64,48 @@ def fit_model(df: pd.DataFrame, model_name: str, refit_model: bool = False):
     data = df.loc[:, df.columns != 'rating_discrete']
     target = df['rating_discrete']
 
-    train_data, test_data, train_target, test_target = train_test_split(data, target, test_size=0.2,
-                                                                        stratify=df['rating_discrete'])
+    outer_results = list()
+    cv_outer = StratifiedKFold(n_splits=2, shuffle=True)
 
-    train_data_proc, test_data_proc = preprocess(train_data, test_data)
+    for model_name, estimator, param_grid in param_grid_model[model_group]:
+        for fold, (train_idx, test_idx) in enumerate(cv_outer.split(data, y=target), 1):
+            print(f'Fold {fold}')
+            train_data, test_data = data.iloc[train_idx, :], data.iloc[test_idx, :]
+            train_target, test_target = target[train_idx], target[test_idx]
 
-    train_target, test_target = train_target.to_numpy(), test_target.to_numpy()
+            cv_inner = StratifiedKFold(n_splits=2, shuffle=True)
 
-    smt_tom = SMOTETomek(smote=SMOTE(k_neighbors=4), tomek=TomekLinks(sampling_strategy='majority'))
-    train_data_smt_tom, train_target_smt_tom = smt_tom.fit_resample(train_data_proc, train_target)
+            train_data_smt, train_target_smt = balance(train_data, train_target)
+            train_data_proc, test_data_proc = preprocess(train_data_smt, test_data)
 
-    param_grid_model = {
-        'tree_based': [
-            (RandomForestClassifier(), param_grid_forest),
-            (DecisionTreeClassifier(), param_grid_tree),
-            (GradientBoostingClassifier(), param_grid_boosting)
-        ],
-        'test': [
-            (DecisionTreeClassifier(), {
-                'criterion': ['gini'],
-                'max_depth': [None]
-            })
-        ],
-        'svm': [
-            (SVC(), param_grid_svc)
-        ],
-        'naive_bayes': [
-            (GaussianNB(), param_grid_nb),
-            (QuadraticDiscriminantAnalysis(), param_grid_qda)
-        ]
-    }
-
-    if refit_model:
-        print('REFITTING')
-        for idx, (estimator, param_grid) in enumerate(param_grid_model[model_name]):
-            print(f'Estimator: {estimator}')
             search = GridSearchCV(estimator=estimator,
                                   param_grid=param_grid,
-                                  cv=5,
-                                  verbose=3,
                                   scoring='accuracy',
-                                  n_jobs=-1)
+                                  cv=cv_inner,
+                                  refit=True,
+                                  n_jobs=-1,
+                                  verbose=3)
 
-            search.fit(train_data_smt_tom, train_target_smt_tom)
-            predicted_target = search.predict(test_data_proc)
-            loss = zero_one_loss(test_target, predicted_target)
-            score = search.score(test_data_proc, test_target)
+            search.fit(train_data_proc, train_target_smt)
+            best_model = search.best_estimator_
+            y_pred = best_model.predict(test_data_proc)
+            acc = accuracy_score(test_target, y_pred)
+            loss = zero_one_loss(test_target, y_pred)
+            outer_results.append(acc)
 
-            print(f'Best val_score: {search.best_score_}')
-            print(f'Loss: {loss:.3f}')
-            print(f'Roc_Auc: {score:.3f}')
+            if acc >= max(outer_results):
+                filename = f'{model_name}.pkl'
+                pickle.dump(search.best_estimator_, open(filename, 'wb'))
 
-            filename = f'{idx}_{model_name}.pkl'
-            pickle.dump(search, open(filename, 'wb'))
-    else:
-        print('RELOAD MODEL')
-        for idx, (estimator, _) in enumerate(param_grid_model[model_name]):
-            filename = f'{idx}_{model_name}.pkl'
-            search = pickle.load(open(filename, 'rb'))
-            predicted_target = search.predict(test_data_proc)
-            loss = zero_one_loss(test_target, predicted_target)
-            score = search.score(test_data_proc, test_target)
+            print(f'loss={loss:3f}, accuracy={acc:3f}, est={search.best_score_:3f}, cfg={search.best_params_}')
 
-            print(f'Loss: {loss:.3f}')
-            print(f'Roc_Auc: {score:.3f}')
+        print(f'[{model_name}] [test] Mean accuracy: {np.mean(outer_results):3f} - σ: {np.std(outer_results):3f}')
+
+
+def test_eval(filepath: str, test_data, test_target):
+    estimator = pickle.load(open(filepath, 'rb'))
+    y_pred = estimator.predict(test_data)
+    acc = accuracy_score(test_target, y_pred)
+    loss = zero_one_loss(test_target, y_pred)
+
+    print(f'loss={loss:3f}, accuracy={acc:3f}')

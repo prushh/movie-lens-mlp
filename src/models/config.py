@@ -1,5 +1,10 @@
 import numpy as np
 import torch.nn as nn
+from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
 
 parameters = {
     'input_act': [nn.ReLU(), nn.LeakyReLU(), nn.Tanh()],
@@ -40,4 +45,25 @@ param_grid_boosting = {
     'max_features': [None, 'sqrt', 'log2'],
     'max_depth': np.arange(5, 20, 5),
     'learning_rate': [0.01, 0.5, 1.0]
+}
+
+param_grid_model = {
+    'tree_based': [
+        ('random_forest_classifier', RandomForestClassifier(), param_grid_forest),
+        ('decision_tree_classifier', DecisionTreeClassifier(), param_grid_tree),
+        ('gradient_boosting_classifier', GradientBoostingClassifier(), param_grid_boosting)
+    ],
+    'test': [
+        ('decision_tree_classifier', DecisionTreeClassifier(), {
+            'criterion': ['gini'],
+            'max_depth': [None]
+        })
+    ],
+    'svm': [
+        ('svc', SVC(), param_grid_svc)
+    ],
+    'naive_bayes': [
+        ('gaussian_nb', GaussianNB(), param_grid_nb),
+        ('qda', QuadraticDiscriminantAnalysis(), param_grid_qda)
+    ]
 }
