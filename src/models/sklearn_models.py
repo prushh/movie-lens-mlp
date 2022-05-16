@@ -1,8 +1,13 @@
-from typing import Tuple, Dict
+import pickle
+from collections import Counter
+from typing import Tuple
 
+import joblib
 import numpy as np
 import pandas as pd
-import sklearn
+from imblearn.combine import SMOTETomek
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import TomekLinks
 from sklearn.compose import ColumnTransformer
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
@@ -48,27 +53,7 @@ def preprocess(train_data: np.ndarray, test_data: np.ndarray) -> Tuple:
     return train_data_proc, test_data_proc
 
 
-def tuning_hyper_parameters(train_data: np.ndarray, train_target: np.ndarray, estimator: sklearn.base.BaseEstimator,
-                            param_grid: Dict):
-    '''
-    search = GridSearchCV(estimator=estimator,
-                          param_grid=param_grid,
-                          cv=5,
-                          verbose=3,
-                          scoring='accuracy',
-                          n_jobs=-1)
-
-    search.fit(train_data, train_target)
-    predicted_target = search.predict(test_data)
-    loss = zero_one_loss(test_target, predicted_target)
-    score = search.score(test_data, test_target)
-
-    print(f'Loss: {loss:.3f}')
-    print(f'Score: {score:.3f}')
-    '''
-
-
-def fit_model(df: pd.DataFrame, model_name: str):
+def fit_model(df: pd.DataFrame, model_name: str, refit_model: bool = False):
     df = (df
           .assign(rating_discrete=pd.cut(df.loc[:, 'rating_mean'], bins=NUM_BINS, labels=False))
           .astype({'rating_discrete': 'int32'})
@@ -79,16 +64,25 @@ def fit_model(df: pd.DataFrame, model_name: str):
 
     train_data, test_data, train_target, test_target = train_test_split(data, target, test_size=0.2,
                                                                         stratify=df['rating_discrete'])
-    train_data, test_data = preprocess(train_data, test_data)
 
-    counts = np.bincount(train_target)
-    class_weight = dict(enumerate(1. / counts))
+    train_data_proc, test_data_proc = preprocess(train_data, test_data)
+
+    train_target, test_target = train_target.to_numpy(), test_target.to_numpy()
+
+    smt_tom = SMOTETomek(smote=SMOTE(k_neighbors=4), tomek=TomekLinks(sampling_strategy='majority'))
+    train_data_smt_tom, train_target_smt_tom = smt_tom.fit_resample(train_data_proc, train_target)
 
     param_grid_model = {
         'tree_based': [
-            (RandomForestClassifier(class_weight=class_weight), param_grid_forest),
-            (DecisionTreeClassifier(class_weight=class_weight), param_grid_tree),
+            (RandomForestClassifier(), param_grid_forest),
+            (DecisionTreeClassifier(), param_grid_tree),
             (GradientBoostingClassifier(), param_grid_boosting)
+        ],
+        'test': [
+            (DecisionTreeClassifier(), {
+                'criterion': ['gini'],
+                'max_depth': [None]
+            })
         ],
         'svm': [
             (SVC(), param_grid_svc)
@@ -99,19 +93,36 @@ def fit_model(df: pd.DataFrame, model_name: str):
         ]
     }
 
-    for estimator, param_grid in param_grid_model[model_name]:
-        print(f'Estimator: {estimator}')
-        search = GridSearchCV(estimator=estimator,
-                              param_grid=param_grid,
-                              cv=5,
-                              verbose=3,
-                              scoring='accuracy',
-                              n_jobs=-1)
+    if refit_model:
+        print('REFITTING')
+        for idx, (estimator, param_grid) in enumerate(param_grid_model[model_name]):
+            print(f'Estimator: {estimator}')
+            search = GridSearchCV(estimator=estimator,
+                                  param_grid=param_grid,
+                                  cv=5,
+                                  verbose=3,
+                                  scoring='accuracy',
+                                  n_jobs=-1)
 
-        search.fit(train_data, train_target)
-        predicted_target = search.predict(test_data)
-        loss = zero_one_loss(test_target, predicted_target)
-        score = search.score(test_data, test_target)
+            search.fit(train_data_smt_tom, train_target_smt_tom)
+            predicted_target = search.predict(test_data_proc)
+            loss = zero_one_loss(test_target, predicted_target)
+            score = search.score(test_data_proc, test_target)
 
-        print(f'Loss: {loss:.3f}')
-        print(f'Score: {score:.3f}')
+            print(f'Best val_score: {search.best_score_}')
+            print(f'Loss: {loss:.3f}')
+            print(f'Roc_Auc: {score:.3f}')
+
+            filename = f'{idx}_{model_name}.pkl'
+            pickle.dump(search, open(filename, 'wb'))
+    else:
+        print('RELOAD MODEL')
+        for idx, (estimator, _) in enumerate(param_grid_model[model_name]):
+            filename = f'{idx}_{model_name}.pkl'
+            search = pickle.load(open(filename, 'rb'))
+            predicted_target = search.predict(test_data_proc)
+            loss = zero_one_loss(test_target, predicted_target)
+            score = search.score(test_data_proc, test_target)
+
+            print(f'Loss: {loss:.3f}')
+            print(f'Roc_Auc: {score:.3f}')
