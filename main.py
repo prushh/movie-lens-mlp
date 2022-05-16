@@ -1,6 +1,6 @@
 from src.data.preprocessing import preprocessing
 from src.data.acquisition import retrieve_datasets
-from src.models.network.mlp import mlp
+from src.models.sklearn_models import fit_model
 
 
 def main() -> int:
@@ -9,7 +9,10 @@ def main() -> int:
 
     final = preprocessing()
 
-    mlp(final)
+    models = ['tree_based', 'svm', 'naive_bayes']
+
+    for model_group in models:
+        fit_model(final, model_group)
 
 
 if __name__ == '__main__':

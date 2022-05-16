@@ -65,7 +65,7 @@ def fit_model(df: pd.DataFrame, model_group: str):
     target = df['rating_discrete']
 
     outer_results = list()
-    cv_outer = StratifiedKFold(n_splits=2, shuffle=True)
+    cv_outer = StratifiedKFold(n_splits=5, shuffle=True)
 
     for model_name, estimator, param_grid in param_grid_model[model_group]:
         for fold, (train_idx, test_idx) in enumerate(cv_outer.split(data, y=target), 1):
@@ -73,7 +73,7 @@ def fit_model(df: pd.DataFrame, model_group: str):
             train_data, test_data = data.iloc[train_idx, :], data.iloc[test_idx, :]
             train_target, test_target = target[train_idx], target[test_idx]
 
-            cv_inner = StratifiedKFold(n_splits=2, shuffle=True)
+            cv_inner = StratifiedKFold(n_splits=5, shuffle=True)
 
             train_data_smt, train_target_smt = balance(train_data, train_target)
             train_data_proc, test_data_proc = preprocess(train_data_smt, test_data)
