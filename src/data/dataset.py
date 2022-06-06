@@ -39,33 +39,26 @@ class MovieDataset(Dataset):
         y = pd.cut(target, bins=self.num_classes, labels=False)
         return y
 
-    def scale(self, train_idx, test_idx, val_idx, scaler, features: List[int]):
+    def scale(self, train_idx, test_idx, scaler, features: List[int]):
         train_data = self.X[train_idx]
         test_data = self.X[test_idx]
-        val_data = self.X[val_idx]
 
         for feature in features:
             feature_train = train_data[:, feature].reshape(-1, 1)
             feature_test = test_data[:, feature].reshape(-1, 1)
-            feature_val = val_data[:, feature].reshape(-1, 1)
 
             scaled_train = np.squeeze(scaler.fit_transform(feature_train))
             scaled_test = np.squeeze(scaler.transform(feature_test))
-            scaled_val = np.squeeze(scaler.transform(feature_val))
 
             self.X[train_idx, feature] = torch.tensor(scaled_train, dtype=torch.float)
             self.X[test_idx, feature] = torch.tensor(scaled_test, dtype=torch.float)
-            self.X[val_idx, feature] = torch.tensor(scaled_val, dtype=torch.float)
 
-    def normalize(self, train_idx, test_idx, val_idx, norm: str = 'l2'):
+    def normalize(self, train_idx, test_idx, norm: str = 'l2'):
         train_data = self.X[train_idx]
         test_data = self.X[test_idx]
-        val_data = self.X[val_idx]
 
         norm_train = normalize(train_data, norm=norm)
         norm_test = normalize(test_data, norm=norm)
-        norm_val = normalize(val_data, norm=norm)
 
         self.X[train_idx, :] = torch.tensor(norm_train, dtype=torch.float)
         self.X[test_idx, :] = torch.tensor(norm_test, dtype=torch.float)
-        self.X[val_idx, :] = torch.tensor(norm_val, dtype=torch.float)
