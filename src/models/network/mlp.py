@@ -1,6 +1,6 @@
 import itertools
 import os
-from typing import Dict
+from typing import Dict, Union
 
 from timeit import default_timer as timer
 import numpy as np
@@ -16,7 +16,7 @@ from torch.utils import tensorboard
 from torch.optim import lr_scheduler
 
 from src.data.dataset import MovieDataset
-from src.models.config import parameters
+from src.models.config import param_layers, param_grid_mlp
 from src.models.network.train import train
 from src.models.network.validate import validate
 from src.utils.const import NETWORK_RESULTS_DIR
@@ -146,7 +146,7 @@ def training_loop(
 def execute(
         name_train: str,
         network: nn.Module,
-        starting_lr: float,
+        optimizer: Union[torch.optim.Adam, torch.optim.SGD],
         num_epochs: int,
         data_loader_train: torch.utils.data.DataLoader,
         data_loader_val: torch.utils.data.DataLoader,
@@ -156,7 +156,7 @@ def execute(
     Executes the training loop
     :param name_train: the name for the log sub-folder
     :param network: the network to train
-    :param starting_lr: the staring learning rate
+    :param optimizer: the optimizer
     :param num_epochs: the number of epochs
     :param data_loader_train: the data loader with training data
     :param data_loader_val: the data loader with validation data
@@ -170,7 +170,7 @@ def execute(
     writer = tensorboard.SummaryWriter(log_dir)
 
     # Optimization
-    optimizer = optim.Adam(network.parameters(), lr=starting_lr, weight_decay=0.000001)
+    # optimizer = optim.Adam(network.parameters(), lr=starting_lr, weight_decay=0.000001)
 
     # Learning Rate schedule: decays the learning rate by a factor of `gamma`
     # every `step_size` epochs
@@ -178,7 +178,7 @@ def execute(
 
     statistics = training_loop(writer, num_epochs, optimizer, scheduler,
                                log_interval, network, data_loader_train,
-                               data_loader_val, device, verbose=False)
+                               data_loader_val, device, verbose=True)
     writer.close()
 
     best_epoch = np.argmax(statistics['val_acc_values']) + 1
@@ -196,11 +196,16 @@ def mlp(df: pd.DataFrame):
     dataset = MovieDataset(df)
 
     hyper_parameters_model = itertools.product(
-        parameters['input_act'],
-        parameters['hidden_act'],
-        parameters['dropout'],
-        parameters['batch_norm']
-        # parameters['output_fn']
+        param_layers['input_act'],
+        param_layers['hidden_act'],
+        param_layers['num_hidden_layers'],
+        param_layers['dropout'],
+        param_layers['batch_norm'],
+        param_layers['output_fn'],
+        param_grid_mlp['batch_size'],
+        param_grid_mlp['optim'],
+        param_grid_mlp['momentum'],
+        param_grid_mlp['weight_decay'],
     )
 
     features = [
@@ -215,7 +220,9 @@ def mlp(df: pd.DataFrame):
     best_results = []
     cv_outer = StratifiedKFold(n_splits=5, shuffle=True)
 
-    for idx, (input_act, hidden_act, dropout, batch_norm) in enumerate(hyper_parameters_model):
+    for idx, (input_act, hidden_act, num_hidden_layers, dropout, batch_norm, _, batch_size, optimizer_class, momentum,
+              weight_decay) in enumerate(
+        hyper_parameters_model):
         test_results = []
         cfg = (input_act, hidden_act, dropout, batch_norm)
         for fold, (train_idx, test_idx) in enumerate(cv_outer.split(dataset.X, y=dataset.y), 1):
@@ -223,7 +230,6 @@ def mlp(df: pd.DataFrame):
             data_test = utils.data.Subset(dataset, test_idx)
 
             num_workers = 2
-            batch_size = 64
             loader_test = utils.data.DataLoader(data_test, batch_size=1,
                                                 shuffle=False,
                                                 num_workers=num_workers)
@@ -235,18 +241,17 @@ def mlp(df: pd.DataFrame):
             for inner_fold, (inner_train_idx, val_idx) in enumerate(
                     cv_inner.split(dataset.X[train_idx], y=dataset.y[train_idx]), 1):
 
-                # --------------------------------------------------------------------------
-                # TODO: balance -> preprocessing get better performance
+                # Balancing
                 train_target = dataset.y[inner_train_idx]
                 counts = np.bincount(train_target)
                 labels_weights = 1. / counts
                 weights = torch.tensor(labels_weights[train_target], dtype=torch.float)
                 sampler = utils.data.WeightedRandomSampler(weights, len(weights), replacement=True)
 
+                # Scaling and normalization
                 scaler = preprocessing.MinMaxScaler()
                 dataset.scale(train_idx, test_idx, scaler, features)
                 dataset.normalize(train_idx, test_idx)
-                # --------------------------------------------------------------------------
 
                 data_train = utils.data.Subset(dataset, inner_train_idx)
                 data_val = utils.data.Subset(dataset, val_idx)
@@ -267,7 +272,7 @@ def mlp(df: pd.DataFrame):
                                    input_act=input_act,
                                    hidden_size=hidden_size,
                                    hidden_act=hidden_act,
-                                   num_hidden_layers=1,
+                                   num_hidden_layers=num_hidden_layers,
                                    dropout=dropout,
                                    output_fn=None,
                                    num_classes=num_classes)
@@ -280,10 +285,20 @@ def mlp(df: pd.DataFrame):
                     summary(network)
 
                 name_train = f'movie_net_experiment_{idx}'
-                lr = 0.001
+                starting_lr = 0.001
                 num_epochs = 5
 
-                last_result = execute(name_train, network, lr, num_epochs, loader_train, loader_val, device)
+                if optimizer_class == torch.optim.Adam:
+                    optimizer = optimizer_class(network.parameters(),
+                                                lr=starting_lr,
+                                                weight_decay=weight_decay)
+                else:
+                    optimizer = optimizer_class(network.parameters(),
+                                                lr=starting_lr,
+                                                momentum=momentum,
+                                                weight_decay=weight_decay)
+
+                last_result = execute(name_train, network, optimizer, num_epochs, loader_train, loader_val, device)
 
                 val_results.append(
                     last_result
@@ -303,11 +318,7 @@ def mlp(df: pd.DataFrame):
             }
             test_results.append(test_statistics)
 
-        accumulator = 0
-        for stat in test_results:
-            accumulator += stat['acc']
-
-        test_mean_acc = accumulator / len(test_results)
+        test_mean_acc = sum(d['acc'] for d in test_results) / len(test_results)
         print(f'Mean test accuracy: {test_mean_acc:3f}')
 
         test_acc_cfg = {

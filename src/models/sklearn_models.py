@@ -64,7 +64,7 @@ def fit_model(df: pd.DataFrame, model_group: str):
     data = df.loc[:, df.columns != 'rating_discrete']
     target = df['rating_discrete']
 
-    outer_results = list()
+    outer_results = []
     cv_outer = StratifiedKFold(n_splits=5, shuffle=True)
 
     for model_name, estimator, param_grid in param_grid_model[model_group]:
@@ -93,6 +93,7 @@ def fit_model(df: pd.DataFrame, model_group: str):
             loss = zero_one_loss(test_target, y_pred)
             outer_results.append(acc)
 
+            # TODO: think about >= or ==
             if acc >= max(outer_results):
                 filename = f'{model_name}.pkl'
                 pickle.dump(search.best_estimator_, open(filename, 'wb'))
