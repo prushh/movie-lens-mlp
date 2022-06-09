@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 import torch.nn as nn
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
@@ -6,12 +7,20 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
-parameters = {
+param_layers = {
     'input_act': [nn.ReLU(), nn.LeakyReLU(), nn.Tanh()],
     'hidden_act': [nn.ReLU(), nn.LeakyReLU()],
-    'dropout': np.arange(0, 1.1, .1),
+    'num_hidden_layers': [3, 5, 7],
+    'dropout': np.arange(0.2, 0.6, .1),
     'batch_norm': [False, True],
-    'output_fn': [None, nn.Softmax()]
+    'output_fn': [None]
+}
+
+param_grid_mlp = {
+    'batch_size': [64, 128],
+    'optim': [torch.optim.Adam, torch.optim.SGD],
+    'momentum': np.arange(0.5, 1, .2),
+    'weight_decay': [0.00001, 0.000001, 0.0000001]
 }
 
 param_grid_svc = {
