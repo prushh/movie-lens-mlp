@@ -198,18 +198,7 @@ def mlp(df: pd.DataFrame):
 
     dataset = MovieDataset(df)
 
-    hyper_parameters_model = itertools.product(
-        param_layers['input_act'],
-        param_layers['hidden_act'],
-        param_layers['num_hidden_layers'],
-        param_layers['dropout'],
-        param_layers['batch_norm'],
-        param_layers['output_fn'],
-        param_grid_mlp['batch_size'],
-        param_grid_mlp['optim'],
-        param_grid_mlp['momentum'],
-        param_grid_mlp['weight_decay'],
-    )
+
 
     features = [
         dataset.idx_column['year'],
@@ -226,8 +215,20 @@ def mlp(df: pd.DataFrame):
     cv_outer = StratifiedKFold(n_splits=2, shuffle=True)
 
     for fold, (train_idx, test_idx) in enumerate(cv_outer.split(dataset.X, y=dataset.y), 1):
+        hyper_parameters_model = itertools.product(
+            param_layers['input_act'],
+            param_layers['hidden_act'],
+            param_layers['num_hidden_layers'],
+            param_layers['dropout'],
+            param_layers['batch_norm'],
+            param_layers['output_fn'],
+            param_grid_mlp['batch_size'],
+            param_grid_mlp['optim'],
+            param_grid_mlp['momentum'],
+            param_grid_mlp['weight_decay'],
+        )
         val_mean_results = []
-        best_cfg_network = None
+        best_cfg_network = {}
 
         print(f'Fold {fold}')
         data_test = utils.data.Subset(dataset, test_idx)
@@ -257,6 +258,7 @@ def mlp(df: pd.DataFrame):
                 # Balancing
                 train_target = dataset.y[inner_train_idx]
                 counts = np.bincount(train_target)
+                #TODO: sometimes it has runtimewarning of zero division
                 labels_weights = 1. / counts
                 weights = torch.tensor(labels_weights[train_target], dtype=torch.float)
                 sampler = utils.data.WeightedRandomSampler(weights, len(weights), replacement=True)
@@ -292,7 +294,7 @@ def mlp(df: pd.DataFrame):
                 network.reset_weights()
                 network.to(device)
 
-                if fold == 1 and inner_fold == 1:
+                if inner_fold == 1:
                     print('=' * 65)
                     print(f'Configuration [{idx + 1}]: {cfg}')
                     summary(network)
@@ -346,6 +348,7 @@ def mlp(df: pd.DataFrame):
                 }
 
         criterion = nn.CrossEntropyLoss()
+        print(type(best_cfg_network))
         test_loss, test_acc = validate(best_cfg_network['network'], loader_test, device, criterion)
         print(f'Test {fold}, loss={test_loss:3f}, accuracy={test_acc:3f}')
 
