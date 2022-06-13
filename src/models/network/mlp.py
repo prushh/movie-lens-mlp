@@ -151,7 +151,7 @@ def execute(
         data_loader_train: torch.utils.data.DataLoader,
         data_loader_val: torch.utils.data.DataLoader,
         device: torch.device
-) -> float:
+) -> Dict:  # float:
     """
     Executes the training loop
     :param name_train: the name for the log sub-folder
@@ -185,11 +185,14 @@ def execute(
     best_accuracy = statistics['val_acc_values'][best_epoch - 1]
 
     print(f'Best val accuracy: {best_accuracy:.2f} epoch: {best_epoch}.')
-    return statistics['val_acc_values'][-1]
+    # return statistics['val_acc_values'][-1]
+    return {'loss': statistics['loss_values'][-1],
+            'val': statistics['val_acc_values'][-1]}
 
 
 def mlp(df: pd.DataFrame):
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(device)
     if device.type == 'cuda':
         print('Using device:', torch.cuda.get_device_name(device))
 
@@ -216,10 +219,169 @@ def mlp(df: pd.DataFrame):
         dataset.idx_column['rating_count']
     ]
 
-    best_test_network = None
     best_results = []
-    cv_outer = StratifiedKFold(n_splits=5, shuffle=True)
+    test_results = []
 
+    best_test_network = None
+    cv_outer = StratifiedKFold(n_splits=2, shuffle=True)
+
+    for fold, (train_idx, test_idx) in enumerate(cv_outer.split(dataset.X, y=dataset.y), 1):
+        val_mean_results = []
+        best_cfg_network = None
+
+        print(f'Fold {fold}')
+        data_test = utils.data.Subset(dataset, test_idx)
+
+        num_workers = 2
+        loader_test = utils.data.DataLoader(data_test, batch_size=1,
+                                            shuffle=False,
+                                            num_workers=num_workers)
+
+        for idx, (
+                input_act, hidden_act, num_hidden_layers, dropout, batch_norm, _, batch_size, optimizer_class, momentum,
+                weight_decay) in enumerate(hyper_parameters_model):
+
+            val_results = []
+            best_val_network = None
+            max_val_acc = 0
+            val_loss = 0
+
+            cfg = (input_act, hidden_act, num_hidden_layers, dropout, batch_norm, batch_size, optimizer_class, momentum,
+                   weight_decay)
+
+            cv_inner = StratifiedKFold(n_splits=2, shuffle=True)
+
+            for inner_fold, (inner_train_idx, val_idx) in enumerate(
+                    cv_inner.split(dataset.X[train_idx], y=dataset.y[train_idx]), 1):
+
+                # Balancing
+                train_target = dataset.y[inner_train_idx]
+                counts = np.bincount(train_target)
+                labels_weights = 1. / counts
+                weights = torch.tensor(labels_weights[train_target], dtype=torch.float)
+                sampler = utils.data.WeightedRandomSampler(weights, len(weights), replacement=True)
+
+                # Scaling and normalization
+                scaler = preprocessing.MinMaxScaler()
+                dataset.scale(train_idx, test_idx, scaler, features)
+                dataset.normalize(train_idx, test_idx)
+
+                data_train = utils.data.Subset(dataset, inner_train_idx)
+                data_val = utils.data.Subset(dataset, val_idx)
+
+                loader_train = utils.data.DataLoader(data_train, batch_size=batch_size,
+                                                     sampler=sampler,
+                                                     pin_memory=True,
+                                                     num_workers=num_workers)
+
+                loader_val = utils.data.DataLoader(data_val, batch_size=1,
+                                                   shuffle=False,
+                                                   num_workers=num_workers)
+
+                input_size = dataset.X.shape[1]
+                hidden_size = 512
+                num_classes = dataset.num_classes
+                network = MovieNet(input_size=input_size,
+                                   input_act=input_act,
+                                   hidden_size=hidden_size,
+                                   hidden_act=hidden_act,
+                                   num_hidden_layers=num_hidden_layers,
+                                   dropout=dropout,
+                                   output_fn=None,
+                                   num_classes=num_classes)
+                network.reset_weights()
+                network.to(device)
+
+                if fold == 1 and inner_fold == 1:
+                    print('=' * 65)
+                    print(f'Configuration [{idx + 1}]: {cfg}')
+                    summary(network)
+
+                name_train = f'movie_net_experiment_{idx + 1}'
+                starting_lr = 0.001
+                num_epochs = 1
+
+                if optimizer_class == torch.optim.Adam:
+                    optimizer = optimizer_class(network.parameters(),
+                                                lr=starting_lr,
+                                                weight_decay=weight_decay)
+                else:
+                    optimizer = optimizer_class(network.parameters(),
+                                                lr=starting_lr,
+                                                momentum=momentum,
+                                                weight_decay=weight_decay)
+
+                last_result = execute(name_train, network, optimizer, num_epochs, loader_train, loader_val,
+                                      device)
+
+                val_results.append(
+                    last_result
+                )
+
+                max_val_acc = max(item['val'] for item in val_results)
+
+                if last_result['val'] == max_val_acc:
+                    val_loss = last_result['loss']
+                    best_val_network = network
+
+            val_mean_acc = sum(d['val'] for d in val_results) / len(val_results)
+            val_acc_cfg = {
+                'mean': val_mean_acc,
+                'loss': val_loss,
+                'val': max_val_acc,
+                'cfg': cfg
+            }
+
+            val_mean_results.append(
+                val_acc_cfg
+            )
+
+            max_val_mean_acc = max(item['mean'] for item in val_mean_results)
+
+            if val_mean_acc == max_val_mean_acc:
+                print("SOOOOOOONO QUI")
+                best_cfg_network = {
+                    'cfg_id': idx,
+                    'network': best_val_network
+                }
+
+        criterion = nn.CrossEntropyLoss()
+        test_loss, test_acc = validate(best_cfg_network['network'], loader_test, device, criterion)
+        print(f'Test {fold}, loss={test_loss:3f}, accuracy={test_acc:3f}')
+
+
+        '''
+        test_statistics = {
+            'loss': test_loss,
+            'acc': test_acc,
+            'network': best_val_network
+        }
+        test_results.append(test_statistics)
+
+        
+        test_mean_acc = sum(d['acc'] for d in test_results) / len(test_results)
+        print(f'Mean test accuracy: {test_mean_acc:3f}')
+
+        test_acc_cfg = {
+            'acc': test_mean_acc,
+            'cfg': cfg
+        }
+        best_results.append(test_acc_cfg)
+
+        max_acc = max(item['acc'] for item in best_results)
+
+        if test_mean_acc >= max_acc:
+            max_acc = 0
+            for stat in test_results:
+                if stat['acc'] > max_acc:
+                    max_acc = stat['acc']
+                    best_test_network = stat['network']
+
+            if not os.path.exists(NETWORK_RESULTS_DIR):
+                os.mkdir(NETWORK_RESULTS_DIR)
+            path = os.path.join(NETWORK_RESULTS_DIR, 'best_network.pt')
+            torch.save(best_test_network.state_dict(), path)
+   
     for idx, (input_act, hidden_act, num_hidden_layers, dropout, batch_norm, _, batch_size, optimizer_class, momentum,
               weight_decay) in enumerate(
         hyper_parameters_model):
@@ -339,4 +501,4 @@ def mlp(df: pd.DataFrame):
             if not os.path.exists(NETWORK_RESULTS_DIR):
                 os.mkdir(NETWORK_RESULTS_DIR)
             path = os.path.join(NETWORK_RESULTS_DIR, 'best_network.pt')
-            torch.save(best_test_network.state_dict(), path)
+            torch.save(best_test_network.state_dict(), path)'''
