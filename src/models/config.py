@@ -8,19 +8,19 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
 # param_layers = {
-#     'input_act': [nn.ReLU(), nn.LeakyReLU(), nn.Tanh()],
-#     'hidden_act': [nn.ReLU(), nn.LeakyReLU()],
-#     'num_hidden_layers': [3, 5, 7],
-#     'dropout': np.arange(0.2, 0.6, .1),
+#     'input_act': [nn.LeakyReLU()],
+#     'hidden_act': [nn.LeakyReLU()],
+#     'num_hidden_layers': [3, 5],
+#     'dropout': [0.2, 0.3, 0.5],
 #     'batch_norm': [False, True],
 #     'output_fn': [None]
 # }
 #
 # param_grid_mlp = {
-#     'batch_size': [64, 128],
+#     'batch_size': [128, 256],
 #     'optim': [torch.optim.Adam, torch.optim.SGD],
-#     'momentum': np.arange(0.5, 1, .2),
-#     'weight_decay': [0.00001, 0.000001, 0.0000001]
+#     'momentum': [0.6, 0.9],
+#     'weight_decay': [1e-5, 1e-7]
 # }
 
 param_layers = {
@@ -33,7 +33,7 @@ param_layers = {
 }
 
 param_grid_mlp = {
-    'batch_size': [64, 128],
+    'batch_size': [128, 256],
     'optim': [torch.optim.Adam],
     'momentum': [0.9],
     'weight_decay': [0.000001]
