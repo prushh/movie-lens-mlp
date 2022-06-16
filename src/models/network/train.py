@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils as utils
+import torch.nn.functional as F
+from sklearn.metrics import precision_recall_fscore_support, f1_score
 from torch.utils import tensorboard
 
 from src.utils.util_models import get_correct_samples
@@ -16,7 +18,7 @@ def train(writer: tensorboard.SummaryWriter,
           optimizer: optim,
           criterion: Callable[[torch.Tensor, torch.Tensor], float],
           log_interval: int,
-          epoch: int) -> Tuple[float, float]:
+          epoch: int) -> Tuple:
     """
     Trains a neural network for one epoch
     :param writer: the summary writer for tensorboard
@@ -34,6 +36,9 @@ def train(writer: tensorboard.SummaryWriter,
     loss_train = 0
     num_batches = len(train_loader)
 
+    y_pred = []
+    y_test = []
+
     model.train()
     for idx_batch, (data, targets) in enumerate(train_loader):
         data, targets = data.to(device), targets.to(device)
@@ -48,6 +53,11 @@ def train(writer: tensorboard.SummaryWriter,
         optimizer.step()
         correct += get_correct_samples(scores, targets)
 
+        class_prob = [F.softmax(elm, dim=0) for elm in scores]
+
+        y_pred.append(class_prob)
+        y_test.append(targets)
+
         if log_interval > 0:
             if idx_batch % log_interval == 0:
                 running_loss = loss_train / samples_train
@@ -57,6 +67,17 @@ def train(writer: tensorboard.SummaryWriter,
                 # indices_random = torch.randperm(images.size(0))[:4]
                 # writer.add_images('Samples/Train', denormalize(images[indices_random]), global_step)
 
+    y_pred_prob = torch.cat([torch.stack(batch) for batch in y_pred])
+    y_test = torch.cat(y_test)
+    y_pred = y_pred_prob.argmax(dim=1, keepdim=True)
+
     loss_train /= samples_train
     accuracy_training = 100. * correct / samples_train
-    return loss_train, accuracy_training
+    f_score = f1_score(y_test.cpu(), y_pred.cpu(), average='weighted')
+
+    # print(loss_train, type(loss_train))
+    # print(accuracy_training, type(accuracy_training))
+    # print(f_score, type(f_score))
+    # exit(1)
+
+    return loss_train, accuracy_training, f_score
