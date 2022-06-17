@@ -93,8 +93,7 @@ def fit_model(df: pd.DataFrame, model_group: str):
             loss = zero_one_loss(test_target, y_pred)
             outer_results.append(acc)
 
-            # TODO: think about >= or ==
-            if acc >= max(outer_results):
+            if acc == max(outer_results):
                 filename = f'{model_name}.pkl'
                 pickle.dump(search.best_estimator_, open(filename, 'wb'))
 

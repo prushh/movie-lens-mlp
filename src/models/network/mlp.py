@@ -7,11 +7,9 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-import torch.optim as optim
 import torch.utils as utils
 from sklearn import preprocessing
 from sklearn.model_selection import StratifiedKFold
-from sklearn.utils import compute_class_weight
 from torch.nn import CrossEntropyLoss
 from torchinfo import summary
 from torch.utils import tensorboard
@@ -21,7 +19,8 @@ from src.data.dataset import MovieDataset
 from src.models.config import param_layers, param_grid_mlp
 from src.models.network.train import train
 from src.models.network.validate import validate
-from src.utils.const import NETWORK_RESULTS_DIR
+from src.utils.const import NETWORK_RESULTS_DIR, NETWORK_RESULT_CSV
+from src.utils.util_models import balancer, add_row_to_df
 
 
 class MovieNet(nn.Module):
@@ -232,7 +231,6 @@ def execute(
 
 def mlp(df: pd.DataFrame):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(device)
     if device.type == 'cuda':
         print('Using device:', torch.cuda.get_device_name(device))
 
@@ -307,16 +305,7 @@ def mlp(df: pd.DataFrame):
 
                 # Balancing
                 train_target = dataset.y[inner_train_idx]
-                counts = np.bincount(train_target)
-                if counts.any(0):
-                    np.seterr(divide='ignore')
-                    labels_weights = 1. / counts
-                    labels_weights[np.isinf(labels_weights)] = 0
-                else:
-                    np.seterr(divide=None)
-                    labels_weights = 1. / counts
-                weights = torch.tensor(labels_weights[train_target], dtype=torch.float)
-                sampler = utils.data.WeightedRandomSampler(weights, len(weights), replacement=True)
+                sampler = balancer(train_target)
 
                 # Scaling and normalization
                 scaler = preprocessing.MinMaxScaler()
@@ -353,6 +342,7 @@ def mlp(df: pd.DataFrame):
                     print(f'Configuration [{idx}]: {cfg}')
                     summary(network)
 
+                # TODO: fix experiment name
                 name_train = f'movie_net_experiment_{idx}'
 
                 if optimizer_class == torch.optim.Adam:
@@ -378,24 +368,11 @@ def mlp(df: pd.DataFrame):
                     max_f1_val = fold_stat['f1_val']
                     best_val_network = network
 
-            row_stat = {
-                'cfg': [idx],
-                'fold': [fold]
-            }
             criterion = CrossEntropyLoss()
             loss_test, acc_test, f1_test = validate(best_val_network, loader_test, device, criterion)
             print(f'Test {fold}, loss={loss_test:3f}, accuracy={acc_test:3f}, f1={f1_test:3f}')
 
-            row_stat['loss_test'] = loss_test
-            row_stat['acc_test'] = acc_test
-            row_stat['f1_test'] = f1_test
-
-            for metric in list_fold_stat[0].keys():
-                numbers = [stat_fold[metric] for stat_fold in list_fold_stat]
-                row_stat[f'mean_{metric}'] = [np.mean(numbers)]
-                row_stat[f'std_{metric}'] = [np.std(numbers)]
-
-            df = pd.concat([df, pd.DataFrame(data=row_stat)], ignore_index=True)
+            df = add_row_to_df(idx, fold, df, loss_test, acc_test, f1_test, list_fold_stat)
 
             # Find the best cfg network between the already computed configurations
             if f1_test >= max_f1_test:
@@ -407,4 +384,4 @@ def mlp(df: pd.DataFrame):
         path = os.path.join(NETWORK_RESULTS_DIR, f'best_network_{fold}.pt')
         torch.save(best_cfg_network.state_dict(), path)
 
-    print(df)
+    df.to_csv(NETWORK_RESULT_CSV, encoding='utf-8')
