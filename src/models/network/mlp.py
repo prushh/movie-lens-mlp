@@ -232,6 +232,7 @@ def execute(
 
 def mlp(df: pd.DataFrame):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(device)
     if device.type == 'cuda':
         print('Using device:', torch.cuda.get_device_name(device))
 
@@ -253,10 +254,13 @@ def mlp(df: pd.DataFrame):
         hyper_parameters_model = itertools.product(
             param_layers['input_act'],
             param_layers['hidden_act'],
+            param_layers['hidden_size'],
             param_layers['num_hidden_layers'],
             param_layers['dropout'],
             param_layers['batch_norm'],
             param_layers['output_fn'],
+            param_grid_mlp['starting_lr'],
+            param_grid_mlp['num_epochs'],
             param_grid_mlp['batch_size'],
             param_grid_mlp['optim'],
             param_grid_mlp['momentum'],
@@ -276,15 +280,25 @@ def mlp(df: pd.DataFrame):
                                             shuffle=False,
                                             num_workers=num_workers)
 
-        for idx, (
-                input_act, hidden_act, num_hidden_layers, dropout, batch_norm, _, batch_size, optimizer_class, momentum,
-                weight_decay) in enumerate(hyper_parameters_model):
+        for idx, (input_act,
+                  hidden_act,
+                  hidden_size,
+                  num_hidden_layers,
+                  dropout,
+                  batch_norm,
+                  _,
+                  starting_lr,
+                  num_epochs,
+                  batch_size,
+                  optimizer_class,
+                  momentum,
+                  weight_decay) in enumerate(hyper_parameters_model):
 
             best_val_network = None
             max_f1_val = 0
 
-            cfg = (input_act, hidden_act, num_hidden_layers, dropout, batch_norm, batch_size, optimizer_class, momentum,
-                   weight_decay)
+            cfg = (input_act, hidden_act, hidden_size, num_hidden_layers, dropout, batch_norm, starting_lr, num_epochs,
+                   batch_size, optimizer_class, momentum, weight_decay)
 
             cv_inner = StratifiedKFold(n_splits=n_splits, shuffle=True)
 
@@ -293,9 +307,14 @@ def mlp(df: pd.DataFrame):
 
                 # Balancing
                 train_target = dataset.y[inner_train_idx]
-                # TODO: sometimes division by 0
                 counts = np.bincount(train_target)
-                labels_weights = 1. / counts
+                if counts.any(0):
+                    np.seterr(divide='ignore')
+                    labels_weights = 1. / counts
+                    labels_weights[np.isinf(labels_weights)] = 0
+                else:
+                    np.seterr(divide=None)
+                    labels_weights = 1. / counts
                 weights = torch.tensor(labels_weights[train_target], dtype=torch.float)
                 sampler = utils.data.WeightedRandomSampler(weights, len(weights), replacement=True)
 
@@ -317,7 +336,6 @@ def mlp(df: pd.DataFrame):
                                                    num_workers=num_workers)
 
                 input_size = dataset.X.shape[1]
-                hidden_size = 512
                 num_classes = dataset.num_classes
                 network = MovieNet(input_size=input_size,
                                    input_act=input_act,
@@ -332,12 +350,10 @@ def mlp(df: pd.DataFrame):
 
                 if fold == 1 and inner_fold == 1:
                     print('=' * 65)
-                    print(f'Configuration [{idx + 1}]: {cfg}')
+                    print(f'Configuration [{idx}]: {cfg}')
                     summary(network)
 
-                name_train = f'movie_net_experiment_{idx + 1}'
-                starting_lr = 0.001
-                num_epochs = 2
+                name_train = f'movie_net_experiment_{idx}'
 
                 if optimizer_class == torch.optim.Adam:
                     optimizer = optimizer_class(network.parameters(),
@@ -363,7 +379,7 @@ def mlp(df: pd.DataFrame):
                     best_val_network = network
 
             row_stat = {
-                'cfg': [idx + 1],
+                'cfg': [idx],
                 'fold': [fold]
             }
             criterion = CrossEntropyLoss()
