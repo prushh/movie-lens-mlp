@@ -19,8 +19,8 @@ from src.data.dataset import MovieDataset
 from src.models.config import param_layers, param_grid_mlp
 from src.models.network.train import train
 from src.models.network.validate import validate
-from src.utils.const import NETWORK_RESULTS_DIR, NETWORK_RESULT_CSV
-from src.utils.util_models import balancer, add_row_to_df
+from src.utils.const import NETWORK_RESULTS_DIR, NETWORK_RESULT_CSV, NUM_SPLIT_PARAMS
+from src.utils.util_models import balancer, add_row_to_df, get_set_params
 
 
 class MovieNet(nn.Module):
@@ -229,7 +229,7 @@ def execute(
             'f1_val': np.mean(statistics['val_f1_values'])}
 
 
-def mlp(df: pd.DataFrame):
+def mlp(df: pd.DataFrame, set_number):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if device.type == 'cuda':
         print('Using device:', torch.cuda.get_device_name(device))
@@ -264,7 +264,8 @@ def mlp(df: pd.DataFrame):
             param_grid_mlp['momentum'],
             param_grid_mlp['weight_decay'],
         )
-
+        # we need this function to parallelize the training
+        params = get_set_params(hyper_parameters_model, NUM_SPLIT_PARAMS, set_number)
         print('=' * 65)
         print(f'Fold {fold}')
 
@@ -278,25 +279,27 @@ def mlp(df: pd.DataFrame):
                                             shuffle=False,
                                             num_workers=num_workers)
 
-        for idx, (input_act,
-                  hidden_act,
-                  hidden_size,
-                  num_hidden_layers,
-                  dropout,
-                  batch_norm,
-                  _,
-                  starting_lr,
-                  num_epochs,
-                  batch_size,
-                  optimizer_class,
-                  momentum,
-                  weight_decay) in enumerate(hyper_parameters_model):
+        for (idx, input_act,
+             hidden_act,
+             hidden_size,
+             num_hidden_layers,
+             dropout,
+             batch_norm,
+             _,
+             starting_lr,
+             num_epochs,
+             batch_size,
+             optimizer_class,
+             momentum,
+             weight_decay) in params:
 
             best_val_network = None
             max_f1_val = 0
 
-            cfg = (input_act, hidden_act, hidden_size, num_hidden_layers, dropout, batch_norm, starting_lr, num_epochs,
-                   batch_size, optimizer_class, momentum, weight_decay)
+            cfg = (
+                idx, input_act, hidden_act, hidden_size, num_hidden_layers, dropout, batch_norm, starting_lr,
+                num_epochs,
+                batch_size, optimizer_class, momentum, weight_decay)
 
             cv_inner = StratifiedKFold(n_splits=n_splits, shuffle=True)
 
@@ -382,7 +385,7 @@ def mlp(df: pd.DataFrame):
 
         if not os.path.exists(NETWORK_RESULTS_DIR):
             os.mkdir(NETWORK_RESULTS_DIR)
-        path = os.path.join(NETWORK_RESULTS_DIR, f'best_network_{fold}.pt')
+        path = os.path.join(NETWORK_RESULTS_DIR, f'best_network_{fold}_s{args.set}.pt')
         torch.save(best_cfg_network.state_dict(), path)
 
-    df.to_csv(os.path.join(NETWORK_RESULT_CSV, 'out.csv'), encoding='utf-8')
+        df.to_csv(os.path.join(NETWORK_RESULT_CSV, f'out_s{args.set}.csv'), encoding='utf-8')

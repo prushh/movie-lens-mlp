@@ -64,3 +64,14 @@ def add_row_to_df(cfg: int, fold: int, df: pd.DataFrame, loss_test: float, acc_t
 
     df = pd.concat([df, pd.DataFrame(data=row_stat)], ignore_index=True)
     return df
+
+
+def get_set_params(prod, num_sets: int, selected_set: int):
+    if selected_set > num_sets:
+        selected_set = num_sets - 1
+
+    def chunkify(lst, n):
+        return [lst[i::n] for i in range(n)]
+
+    tagged_list = [(index,) + element for index, element in enumerate(list(prod))]
+    return chunkify(tagged_list, num_sets)[selected_set]
