@@ -244,7 +244,7 @@ def mlp(df: pd.DataFrame):
         dataset.idx_column['rating_count']
     ]
 
-    n_splits = 2
+    n_splits = 5
     cv_outer = StratifiedKFold(n_splits=n_splits, shuffle=True)
     df = pd.DataFrame()
 
@@ -373,6 +373,7 @@ def mlp(df: pd.DataFrame):
             print(f'Test {fold}, loss={loss_test:3f}, accuracy={acc_test:3f}, f1={f1_test:3f}')
 
             df = add_row_to_df(idx, fold, df, loss_test, acc_test, f1_test, list_fold_stat)
+            df.to_csv(os.path.join(NETWORK_RESULT_CSV, 'out.csv'), encoding='utf-8')
 
             # Find the best cfg network between the already computed configurations
             if f1_test >= max_f1_test:
@@ -384,4 +385,4 @@ def mlp(df: pd.DataFrame):
         path = os.path.join(NETWORK_RESULTS_DIR, f'best_network_{fold}.pt')
         torch.save(best_cfg_network.state_dict(), path)
 
-    df.to_csv(NETWORK_RESULT_CSV, encoding='utf-8')
+    df.to_csv(os.path.join(NETWORK_RESULT_CSV, 'out.csv'), encoding='utf-8')
