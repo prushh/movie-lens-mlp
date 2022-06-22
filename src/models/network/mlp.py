@@ -71,7 +71,7 @@ class MovieNet(nn.Module):
 
 
 class EarlyStopping:
-    def __init__(self, patience=5, min_delta=0):
+    def __init__(self, patience=5, min_delta=0.):
         self.patience = patience
         self.min_delta = min_delta
         self.counter = 0
@@ -119,7 +119,7 @@ def training_loop(
     :return: Dict with statistics
     """
     criterion = nn.CrossEntropyLoss()
-    early_stopping = EarlyStopping()
+    early_stopping = EarlyStopping(patience=10,min_delta=0.0001)
     loop_start = timer()
 
     losses_values = []
