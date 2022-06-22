@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.utils as utils
 import torch.nn.functional as F
-from matplotlib import pyplot as plt
+#from matplotlib import pyplot as plt
 from sklearn.metrics import classification_report, roc_curve, auc, f1_score
 from sklearn.preprocessing import label_binarize
 
