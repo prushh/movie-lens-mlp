@@ -385,7 +385,8 @@ def mlp(df: pd.DataFrame, set_number):
 
         if not os.path.exists(NETWORK_RESULTS_DIR):
             os.mkdir(NETWORK_RESULTS_DIR)
-        path = os.path.join(NETWORK_RESULTS_DIR, f'best_network_{fold}_s{args.set}.pt')
+        path = os.path.join(NETWORK_RESULTS_DIR, f'best_network_{fold}_s{set_number}.pt')
         torch.save(best_cfg_network.state_dict(), path)
-
-        df.to_csv(os.path.join(NETWORK_RESULT_CSV, f'out_s{args.set}.csv'), encoding='utf-8')
+        if not os.path.exists(NETWORK_RESULT_CSV):
+            os.mkdir(NETWORK_RESULT_CSV)
+        df.to_csv(os.path.join(NETWORK_RESULT_CSV, f'out_s{set_number}.csv'), encoding='utf-8', index=False)

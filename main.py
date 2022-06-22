@@ -48,7 +48,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         '-s', '--set', default='0', type=int,
-        help='the number that identify the configuration hyperparams set'
+        help='the number that identify the configuration hyperparams set, if negative all configuration are selected'
     )
 
     args = parser.parse_args()
