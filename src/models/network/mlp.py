@@ -119,7 +119,7 @@ def training_loop(
     :return: Dict with statistics
     """
     criterion = nn.CrossEntropyLoss()
-    early_stopping = EarlyStopping(patience=10,min_delta=0.0001)
+    early_stopping = EarlyStopping(patience=7, min_delta=0.001)
     loop_start = timer()
 
     losses_values = []
@@ -274,7 +274,7 @@ def mlp(df: pd.DataFrame, set_number):
         max_f1_test = 0
         data_test = utils.data.Subset(dataset, test_idx)
 
-        num_workers = 2
+        num_workers = 1
         loader_test = utils.data.DataLoader(data_test, batch_size=1,
                                             shuffle=False,
                                             num_workers=num_workers)
@@ -323,7 +323,7 @@ def mlp(df: pd.DataFrame, set_number):
                                                      pin_memory=True,
                                                      num_workers=num_workers)
 
-                loader_val = utils.data.DataLoader(data_val, batch_size=1,
+                loader_val = utils.data.DataLoader(data_val, batch_size=batch_size,
                                                    shuffle=False,
                                                    num_workers=num_workers)
 
