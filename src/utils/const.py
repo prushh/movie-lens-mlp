@@ -48,7 +48,7 @@ INTERIM_PARQUET_NAMES = [
     'tmdb.parquet'
 ]
 
-NUM_SPLIT_PARAMS = 6
+NUM_SPLIT_PARAMS = 4
 NUM_BINS = 10
 SEED = 42
 USE_API = False
