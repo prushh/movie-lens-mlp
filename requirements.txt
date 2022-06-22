@@ -10,6 +10,8 @@ requests==2.26.0
 seaborn==0.11.1
 -f https://download.pytorch.org/whl/torch_stable.html
 torch==1.8.1+cu111
+pyarrow
+fastparquet
 torchinfo==1.7.0
 tqdm==4.62.2
 tensorboard
