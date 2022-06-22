@@ -244,7 +244,7 @@ def mlp(df: pd.DataFrame, set_number):
         dataset.idx_column['rating_count']
     ]
 
-    n_splits = 5
+    n_splits = 2
     cv_outer = StratifiedKFold(n_splits=n_splits, shuffle=True)
     df = pd.DataFrame()
 
