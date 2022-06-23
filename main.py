@@ -3,26 +3,15 @@ import os
 
 import pandas as pd
 
-from src.data.preprocessing import preprocessing
-from src.data.acquisition import retrieve_datasets
 from src.models.network.mlp import mlp
-from src.models.sklearn_models import fit_model
 from src.utils.const import PROCESSED_DIR
 from src.utils.util_models import fix_random
 
 
 def main() -> int:
     fix_random(42)
-    # if not retrieve_datasets():
-    #     return 1
-    #
-    # final = preprocessing()
-    #
-    # models = ['tree_based', 'svm', 'naive_bayes']
     final = pd.read_parquet(os.path.join(PROCESSED_DIR, 'final.parquet'))
 
-    # for model_group in models:
-    #     fit_model(final, model_group)
     mlp(final, args.set)
 
 

@@ -58,7 +58,7 @@ param_grid_mlp = {
 # }
 #
 # param_grid_mlp = {
-#     'num_epochs': [200],
+#     'num_epochs': [150],
 #     'starting_lr': [1e-3],
 #     'batch_size': [128, 256],
 #     'optim': [torch.optim.Adam],
