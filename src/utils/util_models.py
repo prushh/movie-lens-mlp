@@ -49,7 +49,6 @@ def balancer(train_target: np.ndarray) -> utils.data.WeightedRandomSampler:
 def add_row_to_df(cfg: int, fold: int, df: pd.DataFrame, loss_test: float, acc_test: float,
                   f1_test: float,
                   list_fold_stat: List) -> pd.DataFrame:
-
     row_stat = {
         'cfg': cfg,
         'fold': fold,
@@ -71,7 +70,7 @@ def get_set_params(prod, num_sets: int, selected_set: int):
     if selected_set > num_sets:
         selected_set = num_sets - 1
     elif selected_set <= -1:
-        return prod
+        return [(index,) + element for index, element in enumerate(list(prod))]
 
     def chunkify(lst, n):
         return [lst[i::n] for i in range(n)]
