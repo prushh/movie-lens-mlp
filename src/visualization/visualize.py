@@ -1,5 +1,6 @@
 import os
 
+import matplotlib.pyplot
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
@@ -14,6 +15,8 @@ custom_params = {
     'xtick.labelsize': 15,
     'ytick.labelsize': 15
 }
+
+
 # sns.set_theme(rc=custom_params)
 
 
@@ -31,3 +34,21 @@ def histplot(x_values: pd.Series, title: str, xlabel: str, ylabel: str, filename
         plt.savefig(filepath)
 
     plt.show()
+
+
+def kdeplot(x_values: pd.Series, title: str, xlabel: str, ylabel: str, filename: str = '', print_plot=True,
+            **kwargs) -> None:
+    sns.set_theme(rc=custom_params)
+    sns.kdeplot(
+        data=x_values,
+        **kwargs
+    ).set(xlabel=xlabel, ylabel=ylabel)
+    plt.title(title)
+
+    # TODO: think about saving plot in different way (specific function?)
+    if filename:
+        plt.savefig(filename)
+    if print_plot:
+        plt.show()
+    else:
+        plt.close()

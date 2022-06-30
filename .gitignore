@@ -222,3 +222,5 @@ data/*
 
 # Ignore the tensorboard log folder
 src/models/network/logs/*
+
+reports/*
