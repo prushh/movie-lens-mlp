@@ -1,0 +1,15 @@
+\documentclass[../main]{subfiles}
+
+\begin{document}
+
+\chapter{Introduction}
+In this report we will discuss about the whole data pipeline of a project that uses different techniques of machine learning to classify some tabular data.
+In particular, we choose the first project proposal that aims to predict the average mark of a film from its features.
+The first step of the data pipeline requires to download, save and load in memory the MovieLens \cite{site:movielens-datasets}, TMDB \cite{site:tmdb-api-overview} and IMDb \cite{site:imdb-datasets} datasets.  
+Consequently, the datasets were elaborated with the objective to generate a unified dataset that can be used as an input for some machine learning algorithms.
+Afterwards, during the modelling phase we built an MLP model thanks to the PyTorch framework \cite{NEURIPS2019_9015}.
+In addition, we used other techniques like SVM, tree methods and naive methods that are available into the Scikit-Learn library \cite{scikit-learn}. 
+In order to find a good configuration during the performance analysis, it was mandatory to define a large enough hyperparameters space for all the models that we defined.
+Moreover, in the last phase, the cross validation technique was used which ellaborated the data allowing for an improvement in the algorithm performance and higher information output.
+
+\end{document}
