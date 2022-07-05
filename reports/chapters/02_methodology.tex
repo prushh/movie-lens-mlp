@@ -10,30 +10,33 @@ In particular, each subsection will focus on a specific task, except for the dat
 The used datasets are downloaded at runtime directly from the sources.
 These datasets come directly from MovieLens' page, which provides 6 different datasets:
 % TODO: think about, link README.txt
-\begin{table}[h]
-    \begin{tabular}{|l | l|}
-    \hline
-    \textbf{Dataset} & \textbf{Features} \\
-    \hline
-    ratings.csv &  userId, movieId, rating, timestamp\\
-    \hline
-    tags.csv &  userId, movieId, tag, timestamp\\
-    \hline
-    movies.csv &  movieId, title, genres\\
-    \hline
-    links.csv &  movieId, imdbId, tmdbId\\
-    \hline
-    genome-scores.csv &  movieId, tagId, relevance\\
-    \hline
-    genome-tags.csv & tagId, tag\\
-    \hline
-    \end{tabular}
-\end{table}
+
+    \begin{table}[h]
+        \begin{tabular}{|l | l|}
+        \hline
+        \textbf{Dataset} & \textbf{Features} \\
+        \hline
+        ratings.csv &  userId, movieId, rating, timestamp\\
+        \hline
+        tags.csv &  userId, movieId, tag, timestamp\\
+        \hline
+        movies.csv &  movieId, title, genres\\
+        \hline
+        links.csv &  movieId, imdbId, tmdbId\\
+        \hline
+        genome-scores.csv &  movieId, tagId, relevance\\
+        \hline
+        genome-tags.csv & tagId, tag\\
+        \hline
+        \end{tabular}
+    \end{table}
+        
+
 
 where most of these datasets provides information for approximately 60000 samples.
-Inside the links dataset there are two identifier that can be used to ghater additional informations from external source
-Since the links dataset provides an identifier to the IMDB and TMDB databases it has been possible to gather some information about the runtime that could provide a better knowledge of each film.
-Since the rating mean is not directly available, the target feature will be computed during the pre-process phase thanks to the ratings dataset.
+Since the links dataset provides an identifier to the IMDB and TMDB databases it has been possible to gather some information about the films runtime that it could provide a better knowledge of them.
+Due to the absence of the rating mean, the target feature will be computed during the pre-process phase thanks to the ratings dataset.
+Further information about the dimensionality of the datasets and the features usage will be discussed in the following section.
 
 
 \section{Data Pre-process}
