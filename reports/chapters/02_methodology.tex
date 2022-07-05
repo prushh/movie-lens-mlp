@@ -3,17 +3,39 @@
 \begin{document}
 
 \chapter{Methodology}
-In the next chapter there will be the explaination of the data pipeline that the project followed. In particular, each subsection will focus on a specific phase of this pipeline, exept for the data visualization, that has been used only when needed.
+In the next chapter there will be the explaination of the data pipeline that the project followed.
+In particular, each subsection will focus on a specific task, except for the data visualization that has been used only when needed.
+
 \section{Data Acquisition}
-The used datasets are downloaded at run-time directly from the sources. These datasets came from directly from MovieLens' page, which provides 6 different dataset that are:
-\begin{itemize}
-    \item ratings.csv
-    \item tags.csv
-    \item movies.csv
-    \item links.csv
-    \item genome-scores.csv and genome-tags.csv
-\end{itemize}
-where the most of these datasets provides information for approximately 60000 samples. Since the links dataset provides an identifier to the IMDB and TMDB databases it has been possibile to gather more information from these external sources throught their API\cite{API-TMDB}\cite{API-IMDB}. 
+The used datasets are downloaded at runtime directly from the sources.
+These datasets come directly from MovieLens' page, which provides 6 different datasets:
+% TODO: think about, link README.txt
+\begin{table}[h]
+    \begin{tabular}{|l | l|}
+    \hline
+    \textbf{Dataset} & \textbf{Features} \\
+    \hline
+    ratings.csv &  userId, movieId, rating, timestamp\\
+    \hline
+    tags.csv &  userId, movieId, tag, timestamp\\
+    \hline
+    movies.csv &  movieId, title, genres\\
+    \hline
+    links.csv &  movieId, imdbId, tmdbId\\
+    \hline
+    genome-scores.csv &  movieId, tagId, relevance\\
+    \hline
+    genome-tags.csv & tagId, tag\\
+    \hline
+    \end{tabular}
+\end{table}
+
+where most of these datasets provides information for approximately 60000 samples.
+Inside the links dataset there are two identifier that can be used to ghater additional informations from external source
+Since the links dataset provides an identifier to the IMDB and TMDB databases it has been possible to gather some information about the runtime that could provide a better knowledge of each film.
+Since the rating mean is not directly available, the target feature will be computed during the pre-process phase thanks to the ratings dataset.
+
+
 \section{Data Pre-process}
 \section{Modeling}
 \section{Performance Analysis}
