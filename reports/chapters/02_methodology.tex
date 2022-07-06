@@ -33,10 +33,11 @@ These datasets come directly from MovieLens' page, which provides 6 different da
         
 
 
-where most of these datasets provides information for approximately 60000 samples.
-Since the links dataset provides an identifier to the IMDB and TMDB databases it has been possible to gather some information about the films runtime that it could provide a better knowledge of them.
-Due to the absence of the rating mean, the target feature will be computed during the pre-process phase thanks to the ratings dataset.
-Further information about the dimensionality of the datasets and the features usage will be discussed in the following section.
+where most of these datasets provides information for approximately 60000 films.
+The links dataset provides two identifiers that allow to collect information from the IMDB and TMDB databases.
+Thanks to the links' features, it has been possible to collect some more information on the running times of the films that could provide more insight into them.
+Talking about the ground truth of the supervisioned models, the rating mean is missing. So the target feature will be computed during the pre-process phase thanks to the ratings dataset.
+Further information about the features usage and the cardinality of the datasets will be discussed in the Pre-Process section.
 
 
 \section{Data Pre-process}
