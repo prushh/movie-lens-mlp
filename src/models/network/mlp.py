@@ -229,7 +229,7 @@ def execute(
             'f1_val': np.mean(statistics['val_f1_values'])}
 
 
-def mlp(df: pd.DataFrame):
+def mlp(df: pd.DataFrame, easy_params: bool):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     if device.type == 'cuda':
         print('Using device:', torch.cuda.get_device_name(device))
