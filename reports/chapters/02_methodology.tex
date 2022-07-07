@@ -41,6 +41,27 @@ Further information about the features usage and the cardinality of the datasets
 
 
 \section{Data Pre-process}
+In this section, will be discussed the Pre-Process phase for each of the above presented dataset.
+In order to achieve a major clearity, the work on each dataset will be discussed in a specific subsection where the operation computed on them will be discussed.
+\subsection{movies.csv}
+Inside this dataset, the title and generes features contains multiple information. In particular, the title has been splitted in two part, where on one hand there's only the title name, and on the other, there's the year of the film production.
+Since, the title name is a string, that doesn't add more information to a classic machine learning model, this feature has been converted into its length meanwhile, the production year just constitutes a new feature.
+The genres feature contains a pipe separated list of a fixed possible values. Since the list is just saying if a film has a specific genre or not, to each film, all the fixed values has been added as a feature, and if a genre appears into the genres feature, that column will result into 1 that indicate the presence of that genre, 0 otherwise. At the end of this initial phase, the movies dataset looks like:
+\begin{table}[h]
+    \begin{tabular}{|l|l|l|l|l|l|l|l|l|}
+    \hline
+    \textbf{movieId} & \textbf{title\_len} & \textbf{year} & \textbf{action} & \textbf{adventure} & \textbf{animation} & \textbf{...}  & \textbf{Western} & \textbf{(no genres listed)} \\ \hline
+    1                & 16                  & 1995          & 0               & 1                  & 1                  & ...           & 0                & 0                           \\ \hline
+    \end{tabular}
+\end{table}
+
+In order to finish the data Pre-Process on this dataset, the data cleaning is required. First of all, there are some films where the year of the film production is missing.
+Analyzing the distribuition of these \refname{fig:boat1} it is possible to see that the distribuition is right skewed, so the missing values can be filled with the \textbf{median}, as suggested during the lectures.
+\begin{figure}[h]
+    \includegraphics[width=\linewidth]{figures/original_year.png}
+    \caption{Density distribuition of the year feature}
+    \label{fig:boat1}
+  \end{figure}
 \section{Modeling}
 \section{Performance Analysis}
 
