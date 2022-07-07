@@ -5,13 +5,14 @@
 \chapter{Methodology}
 In the next chapter there will be the explaination of the data pipeline that the project followed.
 In particular, each subsection will focus on a specific task, except for the data visualization that has been used only when needed.
+% TODO: add references to Pandas an Numpy (?)
 
 \section{Data Acquisition}
 The used datasets are downloaded at runtime directly from the sources.
-These datasets come directly from MovieLens' page, which provides 6 different datasets:
-% TODO: think about, link README.txt
-
+These datasets come directly from MovieLens' page and provides 6 different files.
+More informations about the nature of the data are available \href{https://files.grouplens.org/datasets/movielens/ml-latest-README.html}{here}.
     \begin{table}[h]
+        \center
         \begin{tabular}{|l | l|}
         \hline
         \textbf{Dataset} & \textbf{Features} \\
@@ -33,7 +34,7 @@ These datasets come directly from MovieLens' page, which provides 6 different da
         
 
 
-where most of these datasets provides information for approximately 60000 films.
+Most of these datasets provides information for approximately 60000 films.
 The links dataset provides two identifiers that allow to collect information from the IMDB and TMDB databases.
 Thanks to the links' features, it has been possible to collect some more information on the running times of the films that could provide more insight into them.
 Talking about the ground truth of the supervisioned models, the rating mean is missing. So the target feature will be computed during the pre-process phase thanks to the ratings dataset.
@@ -41,27 +42,81 @@ Further information about the features usage and the cardinality of the datasets
 
 
 \section{Data Pre-process}
-In this section, will be discussed the Pre-Process phase for each of the above presented dataset.
-In order to achieve a major clearity, the work on each dataset will be discussed in a specific subsection where the operation computed on them will be discussed.
-\subsection{movies.csv}
-Inside this dataset, the title and generes features contains multiple information. In particular, the title has been splitted in two part, where on one hand there's only the title name, and on the other, there's the year of the film production.
-Since, the title name is a string, that doesn't add more information to a classic machine learning model, this feature has been converted into its length meanwhile, the production year just constitutes a new feature.
-The genres feature contains a pipe separated list of a fixed possible values. Since the list is just saying if a film has a specific genre or not, to each film, all the fixed values has been added as a feature, and if a genre appears into the genres feature, that column will result into 1 that indicate the presence of that genre, 0 otherwise. At the end of this initial phase, the movies dataset looks like:
+In this section, will be discussed the pre-process phase for each of the above presented datasets.
+In order to achieve a major clearity, the work on each dataset will be discussed in a specific subsection where the operation computed on them will be explained.
+At the beginning of each subsection the cardinality will be reported.
+
+\subsection*{Movies - movies.csv}
+Cardinality: $58098 \times 3$
+
+Inside this dataset, the title and generes features contains multiple information.
+In particular, the title has been splitted in two part, where on one hand there's only the title name, and on the other, there's the year of the film production.
+Since the title name is a string, that doesn't add more information to a classic machine learning model, this feature has been converted into its length meanwhile the production year just constitutes a new feature.
+The genres feature contains a pipe separated list of a fixed possible values.
+Since the list is just saying if a film has a specific genre or not, to each film, all the fixed values has been added as a feature, and if a genre appears into the genres feature, that column will result into 1 that indicate the presence of that genre, 0 otherwise.
+At the end of this initial phase, the first sample of movies dataset looks like:
 \begin{table}[h]
-    \begin{tabular}{|l|l|l|l|l|l|l|l|l|}
+    \center
+    \begin{tabular}{|l|l|l|l|l|l|l|l|}
     \hline
-    \textbf{movieId} & \textbf{title\_len} & \textbf{year} & \textbf{action} & \textbf{adventure} & \textbf{animation} & \textbf{...}  & \textbf{Western} & \textbf{(no genres listed)} \\ \hline
-    1                & 16                  & 1995          & 0               & 1                  & 1                  & ...           & 0                & 0                           \\ \hline
+    \textbf{movieId} & \textbf{title\_len} & \textbf{year} & \textbf{action} & \textbf{adventure} & \textbf{\dots}  & \textbf{Western} & \textbf{(no genres listed)} \\
+    \hline
+    1                & 16                  & 1995          & 0               & 1                  & \dots           & 0                & 0                           \\
+    \hline
     \end{tabular}
 \end{table}
 
-In order to finish the data Pre-Process on this dataset, the data cleaning is required. First of all, there are some films where the year of the film production is missing.
-Analyzing the distribuition of these \refname{fig:boat1} it is possible to see that the distribuition is right skewed, so the missing values can be filled with the \textbf{median}, as suggested during the lectures.
+In order to finish the data pre-process on this dataset, the data cleaning is required.
+First of all, there are some films where the year of the film production is missing.
+Analyzing the distribuition of these, as showed in Figure \ref{fig:year_distribution_missing}, it is possible to see that the distribuition is right skewed, so the missing values can be filled with the \textbf{median}, as suggested during the lectures.
 \begin{figure}[h]
-    \includegraphics[width=\linewidth]{figures/original_year.png}
-    \caption{Density distribuition of the year feature}
-    \label{fig:boat1}
-  \end{figure}
+    \includegraphics[width=\linewidth]{figures/year_distribution_missing.png}
+    \caption{Right skewed probability distribuition of the year feature}
+    \label{fig:year_distribution_missing}
+\end{figure}
+
+Since the feature (no genres listed) and the films that has no genres provide no information about the film, they will be removed obtaining a final cardinality of $53832 \times 22$.
+
+\subsection*{Tags - tags.csv}
+Cardinality: $1108997 \times 4$
+
+In order to use the relevant data from this dataset the timestamp and userId features have been deleted because they don't explain anything more about the films.
+The information provided by each sample in the dataset are not very meaningful, for this reason it was decided to count the number of tags associated with each film, in order to understand how much interaction that film generated.
+When a film doesn't have any related tag, the tag\_count can be setted to 0 because no users were interested on that film.
+After these operations the cardinality was reduced to $45981 \times 2$.
+
+\subsection*{Ratings - ratings.csv}
+Cardinality: $27753443 \times 2$
+
+The features in this dataset were necessary to find the target column.
+In order to compute it, the average of each films' ratings has been calculated.
+In addition, the number of the rating on each film has been counted.
+However, the task of this project is the classification, for this reason the rating\_mean has been discretized in 10 bins, where each of them covers a rating range of 0.45 as showed in Figure \ref{fig:rating_mean_discretized}.
+
+\begin{figure}[h]
+    \center
+    \includegraphics[width=\linewidth]{figures/step_rating_mean_discretized.png}
+    \caption{Discretization of the rating\_mean feature}
+    \label{fig:rating_mean_discretized}
+\end{figure}
+
+At the end, the final cardinality is $53889 \times 4$.
+
+\subsection*{Genome - genome-scores.csv and genome-tags.csv}
+Cardinality scores: $14862528 \times 3$
+
+\noindent
+Cardinality tags: $1128 \times 2$
+
+Talking about these two datasets, the merge operation over the tagId was needed because it was interesting to associate the tagId with its string name.
+After this union, on each sample there is the correspondence between a movieId, the tag name and the relevance of that tag.
+The final step consist on relate every single film to its relevance, using the pivot function.
+% TODO: continue..
+
+\subsection*{TMDB - tmdb.csv}
+
+\subsection*{IMDb - imdb.csv}
+
 \section{Modeling}
 \section{Performance Analysis}
 
