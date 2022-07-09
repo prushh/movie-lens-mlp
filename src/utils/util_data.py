@@ -57,12 +57,16 @@ def tsv_to_csv(filepath: str) -> str:
     :return: the filename of the .csv file
     """
     df = pd.read_csv(filepath, sep='\t', encoding='utf-8', dtype='object')
-    path_no_ext = os.path.splitext(filepath)[0].replace('.', '-')
+
+    path_no_file = os.path.split(filepath)[0]
+    wrong_filename = os.path.split(filepath)[1]
+    tmp_filename = os.path.splitext(wrong_filename)[0].replace('.', '-')
+    filename = f'{tmp_filename}.csv'
     os.remove(filepath)
 
-    path_ext = f'{path_no_ext}.csv'
-    df.to_csv(path_ext, sep=',', index=False, encoding='utf-8')
-    filename = os.path.basename(path_ext)
+    new_filepath = os.path.join(path_no_file, filename)
+    df.to_csv(new_filepath, sep=',', index=False, encoding='utf-8')
+    filename = os.path.basename(new_filepath)
     return filename
 
 
