@@ -57,7 +57,7 @@ Since the list is just saying if a film has a specific genre or not, to each fil
 At the end of this initial phase, the first sample of movies dataset looks like:
 \begin{table}[h]
     \center
-    \begin{tabular}{|l|l|l|l|l|l|l|l|}
+    \begin{tabular}{|c|c|c|c|c|c|c|c|}
     \hline
     \textbf{movieId} & \textbf{title\_len} & \textbf{year} & \textbf{action} & \textbf{adventure} & \textbf{\dots}  & \textbf{Western} & \textbf{(no genres listed)} \\
     \hline
@@ -71,7 +71,7 @@ First of all, there are some films where the year of the film production is miss
 Analyzing the distribuition of these, as showed in Figure \ref{fig:year_distribution_missing}, it is possible to see that the distribuition is right skewed, so the missing values can be filled with the \textbf{median}, as suggested during the lectures.
 \begin{figure}[h]
     \includegraphics[width=\linewidth]{figures/year_distribution_missing.png}
-    \caption{Right skewed probability distribuition of the year feature}
+    \caption{Right skewed probability distribution of the year feature}
     \label{fig:year_distribution_missing}
 \end{figure}
 
@@ -111,11 +111,44 @@ Cardinality tags: $1128 \times 2$
 Talking about these two datasets, the merge operation over the tagId was needed because it was interesting to associate the tagId with its string name.
 After this union, on each sample there is the correspondence between a movieId, the tag name and the relevance of that tag.
 The final step consist on relate every film to the relevance of each tag, using the pivot function, with the following result:
-% TODO: add sample and cardinality
+\begin{table}[h]
+    \center
+    \begin{tabular}{|c|c|c|c|c|c|c|c|}
+    \hline
+    \textbf{movieId} & \textbf{007}     & \textbf{18th century} & \textbf{action}  & \textbf{absurd} & \textbf{\dots} & \textbf{addiction} & \textbf{adventure} \\
+    \hline
+    1       & 0.02900 & 0.05425      & 0.66825 & 0.09725          & \dots & 0.07475   & 0.90700 \\
+    \hline
+    \end{tabular}
+\end{table}
 
-\subsection*{TMDB - tmdb.csv}
+The final dataset named genome.csv has the cardinality equal to $13176 \times 1129$.
 
-\subsection*{IMDb - imdb.csv}
+\subsection*{Links - links.csv}
+Cardinality: $58098 \times 3$
+
+On this dataset no pre-processing was needed because for each movie it contains two identifier that provide a link to external sources.
+The interesting one is tmdbId because it has been used to retrieve information from the TMDB database.
+Using the TMDB Api it has been possibile to build a new dataset that contains some additional features:
+\begin{itemize}
+    \item budget
+    \item revenue
+    \item adult
+    \item runtime
+\end{itemize}
+In order to avoid the expensive operation of the Api calls, the resulted dataset has been saved in a GitHub \href{https://github.com/prushh/movie-lens-mlp/releases/tag/api-dataset}{release}.
+Due to the insufficient amount of valid samples, the IMDb \href{https://datasets.imdbws.com/title.basics.tsv.gz}{title-basics.csv} dataset was downloaded to try to fill in all missing values.
+After a brief exploration and analysis it has been possible to see that only the runtime feature has an enough amount of samples.
+Since there continue to be some missing values, the distribution of this feature was analyzed in Figure \ref{fig:runtime_distribution_missing}.
+It is possible to see that the distribuition is left skewed, so the missing values can be filled with the \textbf{median}.
+
+\begin{figure}[h]
+    \includegraphics[width=\linewidth]{figures/runtime_distribution_missing.png}
+    \caption{Left skewed probability distribution of the runtime feature}
+    \label{fig:runtime_distribution_missing}
+\end{figure}
+
+The cardinality of the external resources is $58098 \times 2$.
 
 \section{Modeling}
 \section{Performance Analysis}
