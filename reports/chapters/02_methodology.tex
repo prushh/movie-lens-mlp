@@ -150,15 +150,26 @@ It is possible to see that the distribuition is left skewed, so the missing valu
 
 The final cardinality of the acquired external resources is $58098 \times 2$.
 
-\subsection*{Merged dataset}
-In this section it will be showed how the cardinality of the used dataset has been created, starting from all the previously processed datasets.
-In particular, the focus will be on the number of samples, because the number of features will increase by the addition of all the features in a single dataset.
-Since, for a classification task, it is interesting to know the information about a sample, the starting dataset will be the movies one then all the other will be merged, trying to preserve the maximum number of samples.
-The first merge has been between movies and ratings, because if a film doesn't have the target feature, it is useless to try to classify it. Moreover it has been discarded all the films that doesn't have a ratings means, obtaining a cardinality of: $50157 \times 24$.
-The second merge is the one between the previously obtained dataset and tags, where there was an important number of samples that hasn't a tag count. In this case, these samples hasn't been discarded because they has been considered as the film didn't have generated any interaction from the users, so all the missing values has been filled with 0, obtaining the cardinality $50157 \times 25$ .
-The third merge is between the previously generated dataset and the external resources. Since the external resources has a sample for each movie, the cardinality of this merge is $50157 \times 26$.
-The final merge consider the genome dataset, where there is a big gap between the cardinality of this dataset, and the one that has build before. The choice on this merge was to discard all the data that didn't match with a sample on the genome dataset, because genome provides more and more interesting features with respect to the ones that the others dataset could provide. For this reason, the final cardinality of the dataset, after the merge operation is: $13147 \times 1154$
+\subsection*{Final - final.parquet}
+In this section it will be showed how the cardinality of the used dataset has been obtained, starting from all the previously processed datasets.
+In particular, the focus will be on the number of samples, because the number of columns will increase by the addition of the features coming from all the other datasets.
+Since for a classification task is interesting to know the information about a sample, the starting dataset will be the movies and then all the others will be merged, trying to preserve the maximum number of samples.
+The first merge has been between movies and ratings because if a film doesn’t have the target feature there is no point to consider it.
+In addition, all films with no rating mean were discarded, resulting in a cardinality of $50157 \times 24$.
+From this point on, all the merges will be performed using the previously calculated dataset, so only the new dataset will be specified.
+The second merge considers tags dataset, where there was an important number of samples that hasn't a tag count.
+In this case, these samples were not discarded because they were considered as a film that generated no users interaction, so all missing values were filled with 0, resulting in a cardinality of $50157 \times 25$.
+The third merge introduces external resources where for each film there is a related sample, so the cardinality depends from the previous one, resulting $50157 \times 26$.
+The final merge introduces the genome dataset, where there is a large gap between the cardinality of this dataset and the previous one.
+The choice for this merge was to discard all data
+that don't match with the genome dataset because it provides more interesting characteristics than the other datasets could provide.
+At the end, the cardinality of the final dataset is $13147 \times 1154$.
+
 \subsection*{Data Transformation}
+After further exploration, it became apparent that some features did not belong to a well-defined range.
+For this reason, it was useful to apply certain transformation techniques such as min-max scaling and normalization.
+In particular, the features that have been analyzed are: title\_length, runtime, rating\_count, tag\_count, year.
+
 
 \section{Modeling}
 \section{Performance Analysis}
