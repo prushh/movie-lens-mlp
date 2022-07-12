@@ -168,9 +168,57 @@ At the end, the cardinality of the final dataset is $13147 \times 1154$.
 \subsection*{Data Transformation}
 After further exploration, it became apparent that some features did not belong to a well-defined range.
 For this reason, it was useful to apply certain transformation techniques such as min-max scaling and normalization.
-In particular, the features that have been analyzed are: title\_length, runtime, rating\_count, tag\_count, year.
+In order to apply some of these trasformation, taking into account also the balancing task, the split of the dataset is needed because all these operations entail working on the training set.
+So, in this section the dataset will be splitted with the ratios showed in Table \ref{table:tabella_split}.
+\begin{table}[h]
+    \begin{center}
+    \begin{tabular}{|c|c|c|}
+    \hline
+    \textbf{Train set size} & \textbf{Validation set size} & \textbf{Test set size} \\ \hline
+    72\%                    & 8\%                          & 20\%                   \\ \hline
+    \end{tabular}
+    \end{center}
+    \caption{Train/Validation/Test set ratios}
+    \label{table:tabella_split}
+\end{table}
 
-
+The features that have been analyzed are: title\_length, runtime, rating\_count, tag\_count, year.
+It has been seen as the distribuition of these features are not Gaussian and for this reason the min-max scaling has been applied.
+\begin{figure}[htb]
+    \begin{minipage}[t]{.19\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/original_title_len.png}
+        \includegraphics[width=\linewidth]{figures/minmax_title_len.png}
+        \subcaption{Title length}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{.19\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/original_runtime.png}
+        \includegraphics[width=\linewidth]{figures/minmax_runtime.png}
+        \subcaption{Runtime}
+    \end{minipage}
+    \begin{minipage}[t]{.19\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/original_rating_count.png}
+        \includegraphics[width=\linewidth]{figures/minmax_rating_count.png}
+        \subcaption{Rating count}
+    \end{minipage}  
+    \begin{minipage}[t]{.19\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/original_tag_count.png}
+        \includegraphics[width=\linewidth]{figures/minmax_tag_count.png}
+        \subcaption{Tag count}
+    \end{minipage}  
+    \begin{minipage}[t]{.19\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/original_year.png}
+        \includegraphics[width=\linewidth]{figures/minmax_year.png}
+        \subcaption{Year}
+    \end{minipage}    
+    \label{fig:distribuition_features}
+    \caption{Comparision of feature distribuition}
+\end{figure}
 \section{Modeling}
 \section{Performance Analysis}
 
