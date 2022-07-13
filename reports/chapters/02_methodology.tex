@@ -54,7 +54,7 @@ In particular, the title has been splitted in two part, where on one hand there'
 Since the title name is a string, that doesn't add more information to a classic machine learning model, this feature has been converted into its length meanwhile the production year just constitutes a new feature.
 The genres feature contains a pipe separated list of a fixed possible values.
 Since the list is just saying if a film has a specific genre or not, to each film, all the fixed values has been added as a feature, and if a genre appears into the genres feature, that column will result into 1 that indicate the presence of that genre, 0 otherwise.
-At the end of this initial phase, the first sample of movies dataset looks like:
+At the end of this initial phase, the first sample of the movies dataset appears as shown in the Table \ref{table:movies-first-sample}.
 \begin{table}[h]
     \center
     \begin{tabular}{|c|c|c|c|c|c|c|c|}
@@ -64,6 +64,8 @@ At the end of this initial phase, the first sample of movies dataset looks like:
     1                & 16                  & 1995          & 0               & 1                  & \dots           & 0                & 0                           \\
     \hline
     \end{tabular}
+    \caption{First sample of movis interim dataset.}
+    \label{table:movies-first-sample}
 \end{table}
 
 In order to finish the data pre-process on this dataset, the data cleaning is required.
@@ -71,7 +73,7 @@ First of all, there are some films where the year of the film production is miss
 Analyzing the distribuition of these, as showed in Figure \ref{fig:year_distribution_missing}, it is possible to see that the distribuition is right skewed, so the missing values can be filled with the \textbf{median}, as suggested during the lectures.
 \begin{figure}[h]
     \includegraphics[width=\linewidth]{figures/year_distribution_missing.png}
-    \caption{Right skewed probability distribution of the year feature}
+    \caption{Right skewed probability distribution of the year feature.}
     \label{fig:year_distribution_missing}
 \end{figure}
 
@@ -96,7 +98,7 @@ However, the task of this project is the classification, for this reason the rat
 \begin{figure}[h]
     \center
     \includegraphics[width=\linewidth]{figures/step_rating_mean_discretized.png}
-    \caption{Discretization of the rating\_mean feature}
+    \caption{Discretization of the rating\_mean feature.}
     \label{fig:rating_mean_discretized}
 \end{figure}
 
@@ -110,7 +112,7 @@ Cardinality tags: $1128 \times 2$
 
 Talking about these two datasets, the merge operation over the tagId was needed because it was interesting to associate the tagId with its string name.
 After this union, on each sample there is the correspondence between a movieId, the tag name and the relevance of that tag.
-The final step consist on relate every film to the relevance of each tag, using the pivot function, with the following result:
+The final step consist on relate every film to the relevance of each tag, using the pivot function, as shown in Table \ref{table:genome-first-sample}.
 \begin{table}[h]
     \center
     \begin{tabular}{|c|c|c|c|c|c|c|c|}
@@ -120,6 +122,8 @@ The final step consist on relate every film to the relevance of each tag, using 
     1       & 0.02900 & 0.05425      & 0.66825 & 0.09725          & \dots & 0.07475   & 0.90700 \\
     \hline
     \end{tabular}
+    \caption{First sample of genome interim dataset.}
+    \label{table:genome-first-sample}
 \end{table}
 
 The final dataset named genome.csv has the cardinality equal to $13176 \times 1129$.
@@ -144,7 +148,7 @@ It is possible to see that the distribuition is left skewed, so the missing valu
 
 \begin{figure}[h]
     \includegraphics[width=\linewidth]{figures/runtime_distribution_missing.png}
-    \caption{Left skewed probability distribution of the runtime feature}
+    \caption{Left skewed probability distribution of the runtime feature.}
     \label{fig:runtime_distribution_missing}
 \end{figure}
 
@@ -169,17 +173,18 @@ At the end, the cardinality of the final dataset is $13147 \times 1154$.
 After further exploration, it became apparent that some features did not belong to a well-defined range.
 For this reason, it was useful to apply certain transformation techniques such as min-max scaling and normalization.
 In order to apply some of these trasformation, taking into account also the balancing task, the split of the dataset is needed because all these operations entail working on the training set.
-So, in this section the dataset will be splitted with the ratios showed in Table \ref{table:tabella_split}.
+So, in this section the dataset will be splitted with the ratios showed in Table \ref{table:dataset_split}.
 \begin{table}[h]
-    \begin{center}
+    \center
     \begin{tabular}{|c|c|c|}
-    \hline
-    \textbf{Train set size} & \textbf{Validation set size} & \textbf{Test set size} \\ \hline
-    72\%                    & 8\%                          & 20\%                   \\ \hline
+        \hline
+        \textbf{Train set size} & \textbf{Validation set size} & \textbf{Test set size} \\
+        \hline
+        72\%                    & 8\%                          & 20\%                   \\
+        \hline
     \end{tabular}
-    \end{center}
-    \caption{Train/Validation/Test set ratios}
-    \label{table:tabella_split}
+    \caption{Train/Validation/Test set ratios.}
+    \label{table:dataset_split}
 \end{table}
 
 The features that have been analyzed are: title\_length, runtime, rating\_count, tag\_count, year.
@@ -217,8 +222,9 @@ It has been seen as the distribuition of these features are not Gaussian and for
         \subcaption{Year}
     \end{minipage}    
     \label{fig:distribuition_features}
-    \caption{Comparision of feature distribuition}
+    \caption{Comparision of feature distribuition.}
 \end{figure}
+
 \section{Modeling}
 \section{Performance Analysis}
 
