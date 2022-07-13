@@ -313,7 +313,7 @@ def mlp(df: pd.DataFrame, set_number):
                 # Scaling and normalization
                 scaler = preprocessing.MinMaxScaler()
                 dataset.scale(train_idx, test_idx, scaler, features)
-                #dataset.normalize(train_idx, test_idx)
+                dataset.normalize(train_idx, test_idx)
 
                 data_train = utils.data.Subset(dataset, inner_train_idx)
                 data_val = utils.data.Subset(dataset, val_idx)

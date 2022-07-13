@@ -57,8 +57,18 @@ class MovieDataset(Dataset):
         train_data = self.X[train_idx]
         test_data = self.X[test_idx]
 
-        norm_train = normalize(train_data, norm=norm)
-        norm_test = normalize(test_data, norm=norm)
+        no_cat_columns = list(set(range(train_data.shape[1])) - set(range(2, 21)))
 
-        self.X[train_idx, :] = torch.tensor(norm_train, dtype=torch.float)
-        self.X[test_idx, :] = torch.tensor(norm_test, dtype=torch.float)
+        cat_train_data = train_data[:, list(range(2, 21))]
+        cat_test_data = test_data[:, list(range(2, 21))]
+        no_cat_train_data = train_data[:, no_cat_columns]
+        no_cat_test_data = test_data[:, no_cat_columns]
+
+        norm_train = normalize(no_cat_train_data, norm=norm)
+        norm_test = normalize(no_cat_test_data, norm=norm)
+
+        all_train = np.concatenate((norm_train, cat_train_data), axis=1)
+        all_test = np.concatenate((norm_test, cat_test_data), axis=1)
+
+        self.X[train_idx, :] = torch.tensor(all_train, dtype=torch.float)
+        self.X[test_idx, :] = torch.tensor(all_test, dtype=torch.float)
