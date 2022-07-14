@@ -5,9 +5,9 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from imblearn.combine import SMOTETomek
+from imblearn.combine import SMOTETomek, SMOTEENN
 from imblearn.over_sampling import SMOTE
-from imblearn.under_sampling import TomekLinks
+from imblearn.under_sampling import TomekLinks, EditedNearestNeighbours
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import zero_one_loss, accuracy_score, f1_score
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
@@ -22,8 +22,7 @@ from src.utils.util_models import add_row_to_df_sk
 def balance(train_data: pd.DataFrame, train_target: pd.Series) -> Tuple:
     k_neighbors = np.min(train_target.value_counts()) - 1
 
-    smt = SMOTETomek(smote=SMOTE(k_neighbors=k_neighbors),
-                     tomek=TomekLinks(sampling_strategy='majority'))
+    smt = SMOTEENN(smote=SMOTE(k_neighbors=k_neighbors), enn=EditedNearestNeighbours(n_neighbors=k_neighbors))
     train_data_smt, train_target_smt = smt.fit_resample(train_data, train_target)
 
     return train_data_smt, train_target_smt
