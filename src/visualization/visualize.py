@@ -50,32 +50,6 @@ def barplot_multiple_balancing(df: pd.DataFrame, title: str) -> None:
     plt.show()
 
 
-def barplot_one_balancing(df: pd.DataFrame, title: str) -> None:
-
-    #never used
-    fig, ax = plt.subplots(figsize=(16, 10))
-    scores = ['mean_acc', 'mean_f1']
-    X = np.arange(len(scores))
-    width = 0.2
-    rs = [X]
-    for idx in range(1, df.shape[0]):
-        tmp = rs[idx - 1]
-        rs.append(
-            [val + width for val in tmp]
-        )
-
-    for idx in range(df.shape[0]):
-        ax.bar(rs[idx], df.iloc[idx][scores].to_numpy(), label=df.iloc[idx]['model_name'], width=width)
-    ax.legend(loc='lower left')
-    loc_ticks = [(val + (df.shape[0] / 2) * width) - width / 2 for val in range(len(scores))]
-    upper_labels = [val.upper() for val in scores]
-    ax.set_title(title)
-    ax.set_xticks(loc_ticks)
-    ax.set_xticklabels(upper_labels)
-
-    plt.show()
-
-
 def histplot(x_values: pd.Series, title: str, xlabel: str, ylabel: str, filename: str = '', **kwargs) -> None:
     sns.set_theme(rc=custom_params)
     sns.histplot(
