@@ -14,7 +14,9 @@ PROCESSED_DIR = os.path.join(DATA_DIR, 'processed')
 FIGURE_DIR = os.path.join('reports', 'figures')
 LOG_DIR = os.path.join('src', 'models', 'log')
 NETWORK_RESULTS_DIR = os.path.join('src', 'models', 'network', 'results')
-NETWORK_RESULT_CSV = os.path.join('src', 'models', 'network')
+NETWORK_RESULT_CSV = os.path.join(NETWORK_RESULTS_DIR, 'csv')
+MODEL_RESULTS_DIR = os.path.join('src', 'models', 'results')
+MODEL_RESULTS_CSV = os.path.join(MODEL_RESULTS_DIR, 'csv')
 
 DATA_SUB_DIRS = [
     'external',

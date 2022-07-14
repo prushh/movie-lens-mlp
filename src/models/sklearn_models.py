@@ -1,3 +1,4 @@
+import os
 import pickle
 from random import randrange
 from typing import Tuple
@@ -8,13 +9,14 @@ from imblearn.combine import SMOTETomek
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import TomekLinks
 from sklearn.compose import ColumnTransformer
-from sklearn.metrics import zero_one_loss, accuracy_score
+from sklearn.metrics import zero_one_loss, accuracy_score, f1_score
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler, Normalizer
 
 from src.models.config import param_grid_model
-from src.utils.const import NUM_BINS
+from src.utils.const import NUM_BINS, MODEL_RESULTS_CSV, MODEL_RESULTS_DIR
+from src.utils.util_models import add_row_to_df_sk
 
 
 def balance(train_data: pd.DataFrame, train_target: pd.Series) -> Tuple:
@@ -46,7 +48,7 @@ def preprocess(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Tuple:
 
     pipe = Pipeline(steps=[
         ('scaler', scaler),
-        ('norm', norm)
+        # ('norm', norm)
     ])
 
     pipe.fit(train_data)
@@ -64,7 +66,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, model_to_te
 
     data = df.loc[:, df.columns != 'rating_discrete']
     target = df['rating_discrete']
-
+    df_results = pd.DataFrame()
     if not test:
         outer_results = []
         cv_outer = StratifiedKFold(n_splits=5, shuffle=True)
@@ -101,11 +103,20 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, model_to_te
                 y_pred = best_model.predict(test_data_proc)
                 acc = accuracy_score(test_target, y_pred)
                 loss = zero_one_loss(test_target, y_pred)
+                f1_test = f1_score(test_target, y_pred)
                 outer_results.append(acc)
+                df_results = add_row_to_df_sk(model_name, fold, df_results, loss, acc, f1_test,
+                                              search.best_params_)
+                if not os.path.exists(MODEL_RESULTS_DIR):
+                    os.mkdir(MODEL_RESULTS_DIR)
+                if not os.path.exists(MODEL_RESULTS_CSV):
+                    os.mkdir(MODEL_RESULTS_CSV)
+                df_results.to_csv(os.path.join(MODEL_RESULTS_CSV, f'out_{model_group}.csv'), encoding='utf-8')
 
                 if acc == max(outer_results):
                     filename = f'{model_name}.pkl'
-                    pickle.dump(search.best_estimator_, open(filename, 'wb'))
+                    filepath = os.path.join(MODEL_RESULTS_DIR, filename)
+                    pickle.dump(search.best_estimator_, open(filepath, 'wb'))
 
                 print(f'loss={loss:3f}, accuracy={acc:3f}, est={search.best_score_:3f}, cfg={search.best_params_}')
 
@@ -120,5 +131,5 @@ def test_eval(filepath: str, test_data, test_target):
     y_pred = estimator.predict(test_data)
     acc = accuracy_score(test_target, y_pred)
     loss = zero_one_loss(test_target, y_pred)
-
-    print(f'loss={loss:3f}, accuracy={acc:3f}')
+    f1_test = f1_score(test_target, y_pred)
+    print(f'loss={loss:3f}, accuracy={acc:3f}, f1_score={f1_test:3f}')

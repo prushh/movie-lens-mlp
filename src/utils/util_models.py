@@ -64,3 +64,19 @@ def add_row_to_df(cfg: int, fold: int, df: pd.DataFrame, loss_test: float, acc_t
 
     df = pd.concat([df, pd.DataFrame(data=row_stat)], ignore_index=True)
     return df
+
+
+def add_row_to_df_sk(model_name: int, fold: int, df: pd.DataFrame, loss_test: float, acc_test: float,
+                     f1_test: float,
+                     cfg: dict) -> pd.DataFrame:
+    row_stat = {
+        'model': model_name,
+        'fold': fold,
+        'loss_test': loss_test,
+        'acc_test': acc_test,
+        'f1_test': f1_test,
+        'cfg': cfg
+    }
+
+    df = pd.concat([df, pd.DataFrame(data=row_stat)], ignore_index=True)
+    return df

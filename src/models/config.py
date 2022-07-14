@@ -82,7 +82,7 @@ param_grid_model = {
     'tree_based': [
         ('random_forest_classifier', RandomForestClassifier(), param_grid_forest),
         ('decision_tree_classifier', DecisionTreeClassifier(), param_grid_tree),
-        ('gradient_boosting_classifier', GradientBoostingClassifier(), param_grid_boosting)
+        # ('gradient_boosting_classifier', GradientBoostingClassifier(), param_grid_boosting) they tooks very long time
     ],
     'svm': [
         ('svc', SVC(), param_grid_svc)
