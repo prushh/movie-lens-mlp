@@ -102,7 +102,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, model_to_te
                 y_pred = best_model.predict(test_data_proc)
                 acc = accuracy_score(test_target, y_pred)
                 loss = zero_one_loss(test_target, y_pred)
-                f1_test = f1_score(test_target, y_pred)
+                f1_test = f1_score(test_target, y_pred, average='weighted')
                 outer_results.append(acc)
                 df_results = add_row_to_df_sk(model_name, fold, df_results, loss, acc, f1_test,
                                               search.best_params_)

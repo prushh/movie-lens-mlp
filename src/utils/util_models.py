@@ -75,7 +75,7 @@ def add_row_to_df_sk(model_name: int, fold: int, df: pd.DataFrame, loss_test: fl
         'loss_test': loss_test,
         'acc_test': acc_test,
         'f1_test': f1_test,
-        'cfg': cfg
+        'cfg': [cfg]
     }
 
     df = pd.concat([df, pd.DataFrame(data=row_stat)], ignore_index=True)
