@@ -67,7 +67,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, model_to_te
     target = df['rating_discrete']
     df_results = pd.DataFrame()
     if not test:
-        outer_results = []
+
         cv_outer = StratifiedKFold(n_splits=5, shuffle=True)
 
         # TODO: now take only one model from a group, reduce also hyperparams
@@ -79,6 +79,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, model_to_te
             correct_param_grid = param_grid_model[model_group]
 
         for model_name, estimator, param_grid in correct_param_grid:
+            outer_results = []
             for fold, (train_idx, test_idx) in enumerate(cv_outer.split(data, y=target), 1):
                 print(f'Fold {fold}')
                 train_data, test_data = data.iloc[train_idx, :], data.iloc[test_idx, :]

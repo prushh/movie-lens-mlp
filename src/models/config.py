@@ -88,7 +88,7 @@ param_grid_model = {
         ('svc', SVC(), param_grid_svc)
     ],
     'naive_bayes': [
-        ('gaussian_nb', GaussianNB(), param_grid_nb),
+        #('gaussian_nb', GaussianNB(), param_grid_nb),
         ('qda', QuadraticDiscriminantAnalysis(), param_grid_qda)
     ]
 }
