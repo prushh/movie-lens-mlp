@@ -46,8 +46,8 @@ param_grid_mlp = {
 }
 
 param_grid_svc = {
-    'C': [0.1, 1, 10, 100],
-    'gamma': [1, 0.1, 0.01, 0.001],
+    'C': [ 1, 10, 100],
+    'gamma': [1, 0.1, 0.01 ],
     'kernel': ['rbf', 'poly', 'sigmoid']
 }
 
@@ -88,7 +88,7 @@ param_grid_model = {
         ('svc', SVC(), param_grid_svc)
     ],
     'naive_bayes': [
-        #('gaussian_nb', GaussianNB(), param_grid_nb),
+        ('gaussian_nb', GaussianNB(), param_grid_nb),
         ('qda', QuadraticDiscriminantAnalysis(), param_grid_qda)
     ]
 }
