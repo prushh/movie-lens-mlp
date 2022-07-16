@@ -21,9 +21,8 @@ custom_params = {
 # sns.set_theme(rc=custom_params)
 
 
-
-
-def barplot_multiple_columns(groups: list, elements_group: list, data: list, title: str) -> None:
+def barplot_multiple_columns(groups: list, elements_group: list, data: list, title: str, filename: str = '',
+                             save: bool = False) -> None:
     fig, ax = plt.subplots(figsize=(16, 10))
 
     # X deve essere il range del numero di gruppi di grafico
@@ -49,6 +48,9 @@ def barplot_multiple_columns(groups: list, elements_group: list, data: list, tit
     ax.set_title(title, fontsize=24)
     ax.set_xticks(loc_ticks)
     ax.set_xticklabels(upper_labels)
+
+    if save:
+        plt.savefig(filename)
 
     plt.show()
 

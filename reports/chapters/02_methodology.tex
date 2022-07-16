@@ -147,7 +147,7 @@ Since there continue to be some missing values, the distribution of this feature
 It is possible to see that the distribuition is left skewed, so the missing values can be filled with the \textbf{median}.
 
 \begin{figure}[h]
-    \includegraphics[width=\linewidth]{figures/runtime_distribution_missing.png}
+    \includegraphics[width=0.2\linewidth]{figures/runtime_distribution_missing.png}
     \caption{Left skewed probability distribution of the runtime feature.}
     \label{fig:runtime_distribution_missing}
 \end{figure}
@@ -224,7 +224,16 @@ It has been seen as the distribuition of these features are not Gaussian and for
     \label{fig:distribuition_features}
     \caption{Comparision of feature distribuition.}
 \end{figure}
-
+For greater reliability, a test function was created. This function calculates a learning task on each scikit model used in this project, which are: Random forest, decision tree, GaussianNB, Quadratic discriminant and SVM.
+From the results, some plots were made to better visualise the results.
+Normalization of the sample together with scaling was also tried, but after some tests it turned out that the normalization technique in addition to minmax scaling did not provide any improvement, as shown in figure \ref{fig:data_transformation}.
+An attempt was also made to apply only normalisation without minmax scaling, but since the dataset with scaling gave slightly better results than the one with normalisation, it was decided to apply only the minmax scaling technique to the final dataset.
+\begin{figure}[h]
+    \includegraphics[width=\linewidth]{figures/data_transformation.png}
+    \caption{Comparision between normalization and minmax scaling}
+    \label{fig:data_transformation}
+\end{figure}
+\subsection*{Data balancing}
 \section{Modeling}
 \section{Performance Analysis}
 
