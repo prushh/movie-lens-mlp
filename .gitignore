@@ -527,3 +527,9 @@ data/*
 
 # Ignore the tensorboard log folder
 src/models/network/logs/*
+
+# Ignore the sklearn model results folder
+src/models/results/*
+
+# Ignore the sklearn model results folder
+src/models/network/results/*
