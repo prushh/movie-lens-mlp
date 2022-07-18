@@ -1,4 +1,5 @@
 import itertools
+from iteration_utilities import random_product
 import os
 from typing import Dict, Union
 
@@ -249,7 +250,7 @@ def mlp(df: pd.DataFrame, easy_params: bool):
     df = pd.DataFrame()
 
     for fold, (train_idx, test_idx) in enumerate(cv_outer.split(dataset.X, y=dataset.y), 1):
-        hyper_parameters_model = itertools.product(
+        hyper_parameters_model_all = itertools.product(
             param_layers['input_act'],
             param_layers['hidden_act'],
             param_layers['hidden_size'],
@@ -264,6 +265,13 @@ def mlp(df: pd.DataFrame, easy_params: bool):
             param_grid_mlp['momentum'],
             param_grid_mlp['weight_decay'],
         )
+
+        if easy_params:
+            # hyper_parameters_model = choice(list(hyper_parameters_model_all))
+            hyper_parameters_model = random_product(hyper_parameters_model_all)
+            print(hyper_parameters_model)
+        else:
+            hyper_parameters_model = hyper_parameters_model_all
 
         print('=' * 65)
         print(f'Fold {fold}')
