@@ -65,25 +65,33 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, model_to_te
     target = df['rating_discrete']
     df_results = pd.DataFrame()
     if not test:
+        N_SPLITS = 2 if easy_params else 5
 
-        cv_outer = StratifiedKFold(n_splits=5, shuffle=True)
+        cv_outer = StratifiedKFold(n_splits=N_SPLITS, shuffle=True)
 
         # TODO: now take only one model from a group, reduce also hyperparams
         if easy_params:
             random_conf = randrange(len(param_grid_model[model_group]))
             easy_param_grid = [param_grid_model[model_group][random_conf]]
-            correct_param_grid = easy_param_grid
+            get_param_grid = easy_param_grid[0][2]
+            tmp_dict = {}
+            for key in get_param_grid.keys():
+                rnd_idx = randrange(len(get_param_grid[key]))
+                tmp_dict[key] = [get_param_grid[key][rnd_idx]]
+            correct_param_grid = [(easy_param_grid[0][0], easy_param_grid[0][1], tmp_dict)]
         else:
             correct_param_grid = param_grid_model[model_group]
 
         for model_name, estimator, param_grid in correct_param_grid:
+            print(f'Model name: {model_name}')
             outer_results = []
+            outer_f1_results = []
             for fold, (train_idx, test_idx) in enumerate(cv_outer.split(data, y=target), 1):
                 print(f'Fold {fold}')
                 train_data, test_data = data.iloc[train_idx, :], data.iloc[test_idx, :]
                 train_target, test_target = target[train_idx], target[test_idx]
 
-                cv_inner = StratifiedKFold(n_splits=5, shuffle=True)
+                cv_inner = StratifiedKFold(n_splits=N_SPLITS, shuffle=True)
 
                 train_data_smt, train_target_smt = balance(train_data, train_target)
                 train_data_proc, test_data_proc = preprocess(train_data_smt, test_data)
@@ -103,6 +111,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, model_to_te
                 loss = zero_one_loss(test_target, y_pred)
                 f1_test = f1_score(test_target, y_pred, average='weighted')
                 outer_results.append(acc)
+                outer_f1_results.append(f1_test)
                 df_results = add_row_to_df_sk(model_name, fold, df_results, loss, acc, f1_test,
                                               search.best_params_)
                 if not os.path.exists(MODEL_RESULTS_DIR):
@@ -116,9 +125,9 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, model_to_te
                     filepath = os.path.join(MODEL_RESULTS_DIR, filename)
                     pickle.dump(search.best_estimator_, open(filepath, 'wb'))
 
-                print(f'loss={loss:3f}, accuracy={acc:3f}, est={search.best_score_:3f}, cfg={search.best_params_}')
+                print(f'loss={loss:3f}, acc={acc:3f} ,f1-score={f1_test:3f}, cfg={search.best_params_}')
 
-            print(f'[{model_name}] [test] Mean accuracy: {np.mean(outer_results):3f} - σ: {np.std(outer_results):3f}')
+            print(f'[{model_name}] [test] Mean accuracy: {np.mean(outer_results):3f} - Mean f1-score: {np.mean(outer_f1_results):3f}')
     else:
         # TODO: Use only 20% of dataset?
         test_eval(model_to_test, data, target)
