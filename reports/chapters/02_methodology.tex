@@ -228,12 +228,41 @@ For greater reliability, a test function was created. This function calculates a
 From the results, some plots were made to better visualise the results.
 Normalization of the sample together with scaling was also tried, but after some tests it turned out that the normalization technique in addition to minmax scaling did not provide any improvement, as shown in figure \ref{fig:data_transformation}.
 An attempt was also made to apply only normalisation without minmax scaling, but since the dataset with scaling gave slightly better results than the one with normalisation, it was decided to apply only the minmax scaling technique to the final dataset.
+
 \begin{figure}[h]
-    \includegraphics[width=\linewidth]{figures/data_transformation.png}
+    \begin{center}
+        \includegraphics[width=0.5\linewidth]{figures/data_transformation.png}
+    \end{center}
+    
     \caption{Comparision between normalization and minmax scaling}
     \label{fig:data_transformation}
 \end{figure}
+
+
 \subsection*{Data balancing}
+The dataset that came from all the previous stages is strongly unbalanced as showed in Figure \ref{fig:unbalanced}.
+\begin{figure}[h]
+    \begin{minipage}[t]{.45\linewidth}
+        \centering
+        \includegraphics[width=\linewidth]{figures/unbalanced.png}
+        
+        \subcaption{Title length}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[t]{.45\linewidth}
+        \centering
+        
+        \includegraphics[width=\linewidth]{figures/unbalance_2.png}
+        \subcaption{Runtime}
+    \end{minipage}
+    
+    \caption{Class distribuition over the samples}
+    
+
+    \label{fig:unbalanced}
+\end{figure}
+
+For this reason a balancing technique is needed to be applied on this dataset. Since, there are a lot of options in the Imbalanced Learn library \ref{imbalanced}, it has been applied several techniques of balancing, to try and find the best one. In order to do this task, the previously testing function has been used.
 \section{Modeling}
 \section{Performance Analysis}
 
