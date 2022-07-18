@@ -170,10 +170,10 @@ that don't match with the genome dataset because it provides more interesting ch
 At the end, the cardinality of the final dataset is $13147 \times 1154$.
 
 \subsection*{Data Transformation}
-After further exploration, it became apparent that some features did not belong to a well-defined range.
+After further exploration, it becomes apparent that some features did not belong to a well-defined range.
 For this reason, it was useful to apply certain transformation techniques such as min-max scaling and normalization.
-In order to apply some of these trasformation, taking into account also the balancing task, the split of the dataset is needed because all these operations entail working on the training set.
-So, in this section the dataset will be splitted with the ratios showed in Table \ref{table:dataset_split}.
+In order to apply some of these transformations, taking into account also the balancing task, the split of the dataset is needed because all these operations entail working on the training set.
+So, in this section, the dataset will be split with the ratios shown in Table \ref{table:dataset_split}.
 \begin{table}[h]
     \center
     \begin{tabular}{|c|c|c|}
@@ -224,18 +224,21 @@ It has been seen as the distribuition of these features are not Gaussian and for
     \label{fig:distribuition_features}
     \caption{Comparision of feature distribuition.}
 \end{figure}
-For greater reliability, a test function was created. This function calculates a learning task on each scikit model used in this project, which are: Random forest, decision tree, GaussianNB, Quadratic discriminant and SVM.
-From the results, some plots were made to better visualise the results.
-Normalization of the sample together with scaling was also tried, but after some tests it turned out that the normalization technique in addition to minmax scaling did not provide any improvement, as shown in figure \ref{fig:data_transformation}.
-An attempt was also made to apply only normalisation without minmax scaling, but since the dataset with scaling gave slightly better results than the one with normalisation, it was decided to apply only the minmax scaling technique to the final dataset.
 
+
+For greater reliability, a test function was created.
+This function calculates a learning task on each scikit model used in this project, which are: RandomForest, DecisionTree, GaussianNB, QDA and SVM.
+From the results, some plots were made to better visualise the results.
+Normalization of the sample together with scaling was also tried, but after some tests it turned out that the normalization technique in addition to minmax scaling did not provide any improvement, as shown in Figure \ref{fig:plot_data_transformation}.
+An attempt was also made to apply only normalization without min-max scaling, but since the dataset with scaling gave slightly better results than the one with normalization, it was decided to apply only the min-max scaling technique to the final dataset.
+%% TODO: change this figure!
 \begin{figure}[h]
     \begin{center}
-        \includegraphics[width=0.5\linewidth]{figures/data_transformation.png}
+        \includegraphics[width=0.7\linewidth]{figures/data_transformation.png}
     \end{center}
     
     \caption{Comparision between normalization and minmax scaling}
-    \label{fig:data_transformation}
+    \label{fig:plot_data_transformation}
 \end{figure}
 
 
@@ -263,7 +266,77 @@ The dataset that came from all the previous stages is strongly unbalanced as sho
 \end{figure}
 
 For this reason a balancing technique is needed to be applied on this dataset. Since, there are a lot of options in the Imbalanced Learn library \ref{imbalanced}, it has been applied several techniques of balancing, to try and find the best one. In order to do this task, the previously testing function has been used.
+
 \section{Modeling}
+In order to train the proposed models with enhanced reliability the internal-external cross-validation is used.
+Each cross-validator has 5 folds and takes the classes distribution into account.
+As required by the assignment, the used models belong to the following categories:
+\begin{enumerate}
+    \item Tree based
+    \item Naive Bayes
+    \item Support Vector Machine (SVM)
+    \item Multilayer Perceptron (MLP)
+\end{enumerate}
+
+and for some of them, more than one model is used.
+The following lists show the set of hyperparameters used for each scikit model:
+\begin{enumerate}[label=1.\arabic*]
+    \item DecisionTree
+    \begin{itemize}
+        \item \textit{criterion}: gini, entropy
+        \item \textit{max\_depth}: [5, 10, 15]
+    \end{itemize}
+    \item RandomForest
+    \begin{itemize}
+        \item \textit{n\_estimator}: [100, 300, 500, 700, 900]
+        \item \textit{max\_features}: sqrt, log2
+    \end{itemize} 
+\end{enumerate}
+
+\begin{enumerate}[label=2.\arabic*]
+    \item GaussianNB
+    \begin{itemize}
+        \item \textit{var\_smoothing}: logspace(0, -9, num=100)
+    \end{itemize}
+    \item Quadratic Discriminant Analysis (QDA)
+    \begin{itemize}
+        \item \textit{reg\_param}: [0.00001, 0.0001, 0.001, 0.01, 0.1]
+        \item \textit{tol}: [0.0001, 0.001, 0.01, 0.1]
+    \end{itemize}
+\end{enumerate}
+
+\begin{enumerate}[label=3.\arabic*]
+    \item SVM
+    \begin{itemize}
+        \item \textit{kernel}: rbf, poly, sigmoid
+        \item \textit{C}: [1, 10, 100]
+        \item \textit{gamma}: [1, 0.1, 0.01]
+    \end{itemize}
+\end{enumerate}
+
+\begin{enumerate}[label=4.\arabic*]
+    \item Neural Network
+    \begin{itemize}
+        \item \textit{num\_epochs}: 200
+        \item \textit{starting\_lr}: 1e-3
+        \item \textit{batch\_size}: [128, 256]
+        \item \textit{optim}: [Adam, SGD]
+        \item \textit{momentum}: [0.6, 0.9]
+        \item \textit{weight\_decay}: [1e-5, 1e-7]
+    \end{itemize}
+\end{enumerate}
+
+With regard to the Neural Network, it was necessary to define also the architecture:
+\begin{itemize}
+    \item \textit{input\_act}: LeakyReLU
+    \item \textit{hidden\_act}: LeakyReLU
+    \item \textit{hidden\_size}: 512
+    \item \textit{num\_hidden\_layers}: [3, 5]
+    \item \textit{dropout}: [0.2, 0.3, 0.5]
+    \item \textit{batch\_norm}: [False, True]
+    \item \textit{output\_fn}: None
+\end{itemize}
+
 \section{Performance Analysis}
 
 \end{document}
