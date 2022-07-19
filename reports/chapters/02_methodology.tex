@@ -281,7 +281,8 @@ Starting from this results, the choosed balancing technique is the SMOTE, obtain
 
 \section{Modeling}
 In order to train the proposed models with enhanced reliability the internal-external cross-validation is used.
-Each cross-validator has 5 folds and takes the classes distribution into account.
+In particular, the dataset has been splitted into the Train set and Test set with the 5-Fold cross-validation, then the same technique has been applied, but this time the
+purpose was to perform hyperparameters optimization. Moreover, each cross-validator takes the classes distribution into account.
 As required by the assignment, the used models belong to the following categories:
 \begin{enumerate}
     \item Tree based
