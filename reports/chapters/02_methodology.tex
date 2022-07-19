@@ -225,11 +225,11 @@ It has been seen as the distribuition of these features are not Gaussian and for
     \caption{Comparision of feature distribuition.}
 \end{figure}
 
-
-For greater reliability, a test function was created.
-This function calculates a learning task on each scikit model used in this project, which are: RandomForest, DecisionTree, GaussianNB, QDA and SVM.
-From the results, some plots were made to better visualise the results.
-Normalization of the sample together with scaling was also tried, but after some tests it turned out that the normalization technique in addition to minmax scaling did not provide any improvement, as shown in Figure \ref{fig:plot_data_transformation}.
+In order to have a greater reliability on the techniques to apply, a test function was created.
+This function uses the default version of the scikit models used in this project, which are: RandomForest, DecisionTree, GaussianNB, QDA and SVM.
+Only the scikit models were used due to their ease of use, which is why the Neural Network does not appear in these tests.
+From the results, some graphs were produced to better interpret the results.
+Thanks to this function, 4 configuration has tried: Normalization of the sample together with scaling, Normalization of the sample without categorical feature with scaling, Minmax scaling, normalization was also tried, but after some tests it turned out that the normalization technique in addition to minmax scaling did not provide any improvement, as shown in Figure \ref{fig:plot_data_transformation}.
 An attempt was also made to apply only normalization without min-max scaling, but since the dataset with scaling gave slightly better results than the one with normalization, it was decided to apply only the min-max scaling technique to the final dataset.
 
 \begin{figure}[h]
