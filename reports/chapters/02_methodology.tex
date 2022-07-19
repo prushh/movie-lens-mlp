@@ -147,6 +147,7 @@ Since there continue to be some missing values, the distribution of this feature
 It is possible to see that the distribuition is left skewed, so the missing values can be filled with the \textbf{median}.
 
 \begin{figure}[h]
+    \center
     \includegraphics[width=\linewidth]{figures/runtime_distribution_missing.png}
     \caption{Left skewed probability distribution of the runtime feature.}
     \label{fig:runtime_distribution_missing}
@@ -240,10 +241,8 @@ After the tests it turned out that the normalization technique in addition to mi
 In the last configuration, only normalization was applied.
 The results obtained are slightly lower than those obtained with the previous technique, which is why only min-max scaling was applied to the final dataset.
 \begin{figure}[htb]
-    \begin{center}
-        \includegraphics[width=0.75\linewidth]{figures/data_transformation.png}
-    \end{center}
-    
+    \center
+    \includegraphics[width=0.75\linewidth]{figures/data_transformation.png}    
     \caption{Comparision between normalization and minmax scaling}
     \label{fig:plot_data_transformation}
 \end{figure}
@@ -252,10 +251,8 @@ The results obtained are slightly lower than those obtained with the previous te
 \subsection*{Data balancing}
 The dataset from all previous stages is strongly unbalanced, as shown in Figure \ref{fig:unbalanced}.
 \begin{figure}[h]
-    \begin{center}
-        \includegraphics[width=0.6\linewidth]{figures/class_distribution_initial.png}
-    \end{center}
-    
+    \center
+    \includegraphics[width=0.6\linewidth]{figures/class_distribution_initial.png}    
     \caption{Initial class distribuition over the samples.}
     \label{fig:unbalanced}
 \end{figure}
@@ -273,25 +270,25 @@ To do so the function mentioned in the previous paragraph was used with the foll
 
 From the outcomes, some graphs were produced to better interpret the results.
 \begin{figure}[h]
-    \begin{center}
-        \includegraphics[width=0.6\linewidth]{figures/imbalance_evaluation.png}
-    \end{center}
-    
+    \center
+    \includegraphics[width=0.6\linewidth]{figures/imbalance_evaluation.png}
     \caption{Dataset balancing comparison.}
     \label{fig:balance_evaluation}
-
 \end{figure}
 
 As showed in Figure \ref{fig:balance_evaluation} the SMOTE technique gave slightly better results than the other balancing methods.
 For this reason it has been applied to the dataset and the dsitribution of samples per class is plotted in Figure \ref{fig:class_distribuition_balance}.
 \begin{figure}[h]
-    \begin{center}
-        \includegraphics[width=0.6\linewidth]{figures/class_distribution_smote.png}
-    \end{center}
-    
+    \center
+    \includegraphics[width=0.6\linewidth]{figures/class_distribution_smote.png}
     \caption{Class distribution  with SMOTE.}
     \label{fig:class_distribuition_balance}
 \end{figure}
+
+Due to the different behaviour of the neural network, it was decided to use one of the methods provided by the PyTorch framework to handle data imbalance:
+\begin{itemize}
+    \item \textit{WeightedRandomSampler}, gives a weight to each sample considering the frequency of the class it belongs to
+\end{itemize}
 \newpage
 
 \section{Modeling}
@@ -333,7 +330,7 @@ The models specified in the assignments were used with the following hyperparame
         \item \textit{gamma}: $\{x = 10^z, z \in \mathbb{Z}|-2 \leq z \leq -1\}$
     \end{itemize}
 \end{itemize}
-
+% TODO: Early Stopping
 The previously defined hyperparameters were chosen from the documentation of the various models.
 In particular, for categorical parameters, a sub-set of those proposed in the model documentation was chosen, while for numerical parameters, a range was created from the default value.
 \begin{itemize}
@@ -343,7 +340,7 @@ In particular, for categorical parameters, a sub-set of those proposed in the mo
         \item \textit{starting\_lr}: $\{10^{-3}\}$
         \item \textit{batch\_size}: \{128, 256\}
         \item \textit{optim}: \{Adam, SGD\}
-        \item \textit{momentum}: \{0.6, 0.9\}
+        \item \textit{momentum}, used only with SGD: \{0.6, 0.9\}
         \item \textit{weight\_decay}: $\{10^{-5}, 10^{-7}\}$
     \end{itemize}
 \end{itemize}
@@ -356,11 +353,22 @@ With regard to the Neural Network, it was necessary to define also the architect
     \item \textit{num\_hidden\_layers}: \{3, 5\}
     \item \textit{dropout}: \{0.2, 0.3, 0.5\}
     \item \textit{batch\_norm}: \{False, True\}
-    \item \textit{output\_fn}: \{None\}
+    \item \textit{loss\_fn}: \{CrossEntropy\}
+    \item \textit{output\_fn}: not used because CrossEntropy includes the SoftMax
 \end{itemize}
 
-Once the best configuration for the Neural Network was obtained, it was decided to carry out further experiments with \textit{batch\_norm} and varying the \textit{batch\_size} in the range \{16, 32, 64, 512, 2048, 16384\}.
+% TODO: momentum, StepLR, WeigthDecay?!
+After optimising the hyperparameters and finding the best configuration, it was decided to study the behaviour of the model when varying the \textit{batch\_size} and the use of \textit{batch\_norm}.
+In particular, the new tested configurations are:
+\begin{itemize}
+    \item \textit{batch\_size}: \{16, 32, 64, 512, 2048, 16384\}
+    \item \textit{batch\_norm}: \{False, True\}
+\end{itemize}
 
 \section{Performance Analysis}
+In the case of study, since the dataset is strongly unbalanced, the validation f1-score is the chosen score with which the ranking of models and hyperparameters combinations is performed.
+At the end of each training fold on a specific configuration, the measured values are \textit{loss}, \textit{accuracy}, \textit{f1-score}.
+Saving these values for each fold, the mean and the confidence interval could be calculated.
+Add ROC for the best configuration.
 
 \end{document}
