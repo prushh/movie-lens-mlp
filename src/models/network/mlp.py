@@ -128,6 +128,7 @@ def training_loop(
     train_f1_values = []
     val_f1_values = []
     val_acc_values = []
+    real_epoch = 0
     for epoch in range(1, num_epochs + 1):
         time_start = timer()
         loss_train, accuracy_train, f_score_train = train(writer, model, loader_train, device,
@@ -165,12 +166,13 @@ def training_loop(
 
         early_stopping(loss_val)
         if early_stopping.early_stop:
+            real_epoch = epoch
             break
 
     loop_end = timer()
     time_loop = loop_end - loop_start
     if verbose:
-        print(f'Time for {num_epochs} epochs (s): {time_loop :.3f}')
+        print(f'Time for {real_epoch} epochs (s): {time_loop :.3f}')
 
     return {'loss_values': losses_values,
             'train_acc_values': train_acc_values,
@@ -211,7 +213,7 @@ def execute(
 
     # Learning Rate schedule: decays the learning rate by a factor of `gamma`
     # every `step_size` epochs
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=1)
 
     statistics = training_loop(writer, num_epochs, optimizer, scheduler,
                                log_interval, network, data_loader_train,
@@ -269,7 +271,6 @@ def mlp(df: pd.DataFrame, easy_params: bool):
         if easy_params:
             # hyper_parameters_model = choice(list(hyper_parameters_model_all))
             hyper_parameters_model = random_product(hyper_parameters_model_all)
-            print(hyper_parameters_model)
         else:
             hyper_parameters_model = hyper_parameters_model_all
 
