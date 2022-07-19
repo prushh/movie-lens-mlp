@@ -228,127 +228,138 @@ It has been seen as the distribuition of these features are not Gaussian and for
 In order to have a greater reliability on the techniques to apply, a test function was created.
 This function uses the default version of the scikit models used in this project, which are: RandomForest, DecisionTree, GaussianNB, QDA and SVM.
 Only the scikit models were used due to their ease of use, which is why the Neural Network does not appear in these tests.
-From the results, some graphs were produced to better interpret the results.
-Thanks to this function, 4 configuration has tried: Normalization of the sample together with scaling, Normalization of the sample without categorical feature with scaling, Minmax scaling, normalization was also tried, but after some tests it turned out that the normalization technique in addition to minmax scaling did not provide any improvement, as shown in Figure \ref{fig:plot_data_transformation}.
-An attempt was also made to apply only normalization without min-max scaling, but since the dataset with scaling gave slightly better results than the one with normalization, it was decided to apply only the min-max scaling technique to the final dataset.
+From the outcomes, some graphs were produced to better interpret the results.
+Thanks to this function, 3 configuration has tried:
+\begin{itemize}
+    \item Minmax scaling with normalization of all non categorical features
+    \item Minmax scaling
+    \item Normalization of all non categorical features
+\end{itemize}
 
-\begin{figure}[h]
+After the tests it turned out that the normalization technique in addition to minmax scaling did not provide any improvement, as shown in Figure \ref{fig:plot_data_transformation}.
+In the last configuration, only normalization was applied.
+The results obtained are slightly lower than those obtained with the previous technique, which is why only min-max scaling was applied to the final dataset.
+\begin{figure}[htb]
     \begin{center}
-        \includegraphics[width=0.7\linewidth]{figures/data_transformation.png}
+        \includegraphics[width=0.75\linewidth]{figures/data_transformation.png}
     \end{center}
     
     \caption{Comparision between normalization and minmax scaling}
     \label{fig:plot_data_transformation}
 \end{figure}
 
-
+% TODO: manage position and dimensions of the figures
 \subsection*{Data balancing}
-The dataset that came from all the previous stages is strongly unbalanced as showed in Figure \ref{fig:unbalanced}.
+The dataset from all previous stages is strongly unbalanced, as shown in Figure \ref{fig:unbalanced}.
 \begin{figure}[h]
     \begin{center}
-        \includegraphics[width=0.5\linewidth]{figures/class_distribution_initial.png}
+        \includegraphics[width=0.6\linewidth]{figures/class_distribution_initial.png}
     \end{center}
     
     \caption{Initial class distribuition over the samples.}
     \label{fig:unbalanced}
 \end{figure}
 
+It is therefore necessary to apply some balancing technique in order to obtain a similar number of samples for each class.
+Since the imbalanced-learn \cite{JMLR:v18:16-365} library provides multiple techniques, it was necessary to carry out tests to see which of these gave the best results.
+To do so the function mentioned in the previous paragraph was used with the following under/over sampler techniques:
+\begin{itemize}
+    \item SMOTE
+    \item SMOTETomek
+    \item SMOTEENN
+    \item RandomOverSampler
+    \item SMOTE with threshold
+\end{itemize}
 
-For this reason a balancing technique is needed to be applied on this dataset. Since, there are a lot of options in the Imbalanced-learn library \cite{imbalanced-learn}, it has been applied several techniques of balancing, to try and find the best one.
-In order to do this task, the previously testing function has been used obtaining results as showed in Figure \ref{fig:balance_evaluation}.
-
+From the outcomes, some graphs were produced to better interpret the results.
 \begin{figure}[h]
     \begin{center}
-        \includegraphics[width=0.7\linewidth]{figures/imbalance_evaluation.png}
+        \includegraphics[width=0.6\linewidth]{figures/imbalance_evaluation.png}
     \end{center}
     
     \caption{Dataset balancing comparison.}
     \label{fig:balance_evaluation}
 
 \end{figure}
-\newpage
-Starting from this results, the choosed balancing technique is the SMOTE, obtaining a class distribuition as showed in Figure \ref{fig:class_distribuition_balance}
 
+As showed in Figure \ref{fig:balance_evaluation} the SMOTE technique gave slightly better results than the other balancing methods.
+For this reason it has been applied to the dataset and the dsitribution of samples per class is plotted in Figure \ref{fig:class_distribuition_balance}.
 \begin{figure}[h]
     \begin{center}
-        \includegraphics[width=0.5\linewidth]{figures/class_distribution_smote.png}
+        \includegraphics[width=0.6\linewidth]{figures/class_distribution_smote.png}
     \end{center}
     
     \caption{Class distribution  with SMOTE.}
     \label{fig:class_distribuition_balance}
 \end{figure}
-
+\newpage
 
 \section{Modeling}
 In order to train the proposed models with enhanced reliability the internal-external cross-validation is used.
-In particular, the dataset has been splitted into the Train set and Test set with the 5-Fold cross-validation, then the same technique has been applied, but this time the
-purpose was to perform hyperparameters optimization. Moreover, each cross-validator takes the classes distribution into account.
-As required by the assignment, the used models belong to the following categories:
-\begin{enumerate}
-    \item Tree based
-    \item Naive Bayes
-    \item Support Vector Machine (SVM)
-    \item Multilayer Perceptron (MLP)
-\end{enumerate}
-
-and for some of them, more than one model is used.
-The following lists show the set of hyperparameters used for each scikit model:
-\begin{enumerate}[label=1.\arabic*]
+In particular, the dataset has been splitted into the train and test sets with the 5-fold cross-validation, then the same technique has been applied, but this time the purpose was to perform hyperparameters optimization.
+Moreover, each cross-validator takes the classes distribution into account.
+The models specified in the assignments were used with the following hyperparameters:
+\begin{itemize}
     \item DecisionTree
     \begin{itemize}
-        \item \textit{criterion}: gini, entropy
-        \item \textit{max\_depth}: [5, 10, 15]
+        \item \textit{criterion}, the function to measure the quality of a split: \{gini, entropy\}
+        \item \textit{max\_depth}: \{5, 10, 15\}
     \end{itemize}
     \item RandomForest
     \begin{itemize}
-        \item \textit{n\_estimator}: [100, 300, 500, 700, 900]
-        \item \textit{max\_features}: sqrt, log2
+        \item \textit{n\_estimator}, the number of trees in the forest: \{100, 300, 500, 700, 900\}
+        \item \textit{max\_features}, the number of features to consider when looking for the best split: \{sqrt, log2\}
     \end{itemize} 
-\end{enumerate}
+\end{itemize}
 
-\begin{enumerate}[label=2.\arabic*]
+\begin{itemize}
     \item GaussianNB
     \begin{itemize}
         \item \textit{var\_smoothing}: logspace(0, -9, num=100)
     \end{itemize}
+    % TODO: check collinearity
     \item Quadratic Discriminant Analysis (QDA)
     \begin{itemize}
-        \item \textit{reg\_param}: [0.00001, 0.0001, 0.001, 0.01, 0.1]
-        \item \textit{tol}: [0.0001, 0.001, 0.01, 0.1]
+        \item \textit{reg\_param}: $\{x = 10^z, z \in \mathbb{Z}|-5 \leq z \leq -1\}$
+        \item \textit{tol}: $\{x = 10^z, z \in \mathbb{Z}|-4 \leq z \leq -1\}$
     \end{itemize}
-\end{enumerate}
+\end{itemize}
 
-\begin{enumerate}[label=3.\arabic*]
+\begin{itemize}
     \item SVM
     \begin{itemize}
-        \item \textit{kernel}: rbf, poly, sigmoid
-        \item \textit{C}: [1, 10, 100]
-        \item \textit{gamma}: [1, 0.1, 0.01]
+        \item \textit{kernel}: \{rbf, poly, sigmoid\}
+        \item \textit{C}: $\{x = 10^z, z \in \mathbb{Z}|-1 \leq z \leq 2\}$
+        \item \textit{gamma}: $\{x = 10^z, z \in \mathbb{Z}|-2 \leq z \leq -1\}$
     \end{itemize}
-\end{enumerate}
+\end{itemize}
 
-\begin{enumerate}[label=4.\arabic*]
+The previously defined hyperparameters were chosen from the documentation of the various models.
+In particular, for categorical parameters, a sub-set of those proposed in the model documentation was chosen, while for numerical parameters, a range was created from the default value.
+\begin{itemize}
     \item Neural Network
     \begin{itemize}
-        \item \textit{num\_epochs}: 200
-        \item \textit{starting\_lr}: 1e-3
-        \item \textit{batch\_size}: [128, 256]
-        \item \textit{optim}: [Adam, SGD]
-        \item \textit{momentum}: [0.6, 0.9]
-        \item \textit{weight\_decay}: [1e-5, 1e-7]
+        \item \textit{num\_epochs}: \{200\}
+        \item \textit{starting\_lr}: $\{10^{-3}\}$
+        \item \textit{batch\_size}: \{128, 256\}
+        \item \textit{optim}: \{Adam, SGD\}
+        \item \textit{momentum}: \{0.6, 0.9\}
+        \item \textit{weight\_decay}: $\{10^{-5}, 10^{-7}\}$
     \end{itemize}
-\end{enumerate}
+\end{itemize}
 
 With regard to the Neural Network, it was necessary to define also the architecture:
 \begin{itemize}
-    \item \textit{input\_act}: LeakyReLU
-    \item \textit{hidden\_act}: LeakyReLU
-    \item \textit{hidden\_size}: 512
-    \item \textit{num\_hidden\_layers}: [3, 5]
-    \item \textit{dropout}: [0.2, 0.3, 0.5]
-    \item \textit{batch\_norm}: [False, True]
-    \item \textit{output\_fn}: None
+    \item \textit{input\_act}: \{LeakyReLU\}
+    \item \textit{hidden\_act}: \{LeakyReLU\}
+    \item \textit{hidden\_size}: \{512\}
+    \item \textit{num\_hidden\_layers}: \{3, 5\}
+    \item \textit{dropout}: \{0.2, 0.3, 0.5\}
+    \item \textit{batch\_norm}: \{False, True\}
+    \item \textit{output\_fn}: \{None\}
 \end{itemize}
+
+Once the best configuration for the Neural Network was obtained, it was decided to carry out further experiments with \textit{batch\_norm} and varying the \textit{batch\_size} in the range \{16, 32, 64, 512, 2048, 16384\}.
 
 \section{Performance Analysis}
 
