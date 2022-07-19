@@ -231,7 +231,7 @@ This function calculates a learning task on each scikit model used in this proje
 From the results, some plots were made to better visualise the results.
 Normalization of the sample together with scaling was also tried, but after some tests it turned out that the normalization technique in addition to minmax scaling did not provide any improvement, as shown in Figure \ref{fig:plot_data_transformation}.
 An attempt was also made to apply only normalization without min-max scaling, but since the dataset with scaling gave slightly better results than the one with normalization, it was decided to apply only the min-max scaling technique to the final dataset.
-%% TODO: change this figure!
+
 \begin{figure}[h]
     \begin{center}
         \includegraphics[width=0.7\linewidth]{figures/data_transformation.png}
@@ -245,27 +245,39 @@ An attempt was also made to apply only normalization without min-max scaling, bu
 \subsection*{Data balancing}
 The dataset that came from all the previous stages is strongly unbalanced as showed in Figure \ref{fig:unbalanced}.
 \begin{figure}[h]
-    \begin{minipage}[t]{.45\linewidth}
-        \centering
-        \includegraphics[width=\linewidth]{figures/unbalanced.png}
-        
-        \subcaption{Title length}
-    \end{minipage}
-    \hfill
-    \begin{minipage}[t]{.45\linewidth}
-        \centering
-        
-        \includegraphics[width=\linewidth]{figures/unbalance_2.png}
-        \subcaption{Runtime}
-    \end{minipage}
+    \begin{center}
+        \includegraphics[width=0.5\linewidth]{figures/class_distribution_initial.png}
+    \end{center}
     
-    \caption{Class distribuition over the samples}
-    
-
+    \caption{Initial class distribuition over the samples.}
     \label{fig:unbalanced}
 \end{figure}
 
-For this reason a balancing technique is needed to be applied on this dataset. Since, there are a lot of options in the Imbalanced Learn library \ref{imbalanced}, it has been applied several techniques of balancing, to try and find the best one. In order to do this task, the previously testing function has been used.
+
+For this reason a balancing technique is needed to be applied on this dataset. Since, there are a lot of options in the Imbalanced Learn library \ref{imbalanced}, it has been applied several techniques of balancing, to try and find the best one.
+In order to do this task, the previously testing function has been used obtaining results as showed in Figure \ref{fig:balance_evaluation}.
+
+\begin{figure}[h]
+    \begin{center}
+        \includegraphics[width=0.7\linewidth]{figures/imbalance_evaluation.png}
+    \end{center}
+    
+    \caption{Dataset balancing comparison.}
+    \label{fig:balance_evaluation}
+
+\end{figure}
+\newpage
+Starting from this results, the choosed balancing technique is the SMOTE, obtaining a class distribuition as showed in Figure \ref{fig:class_distribuition_balance}
+
+\begin{figure}[h]
+    \begin{center}
+        \includegraphics[width=0.5\linewidth]{figures/class_distribution_smote.png}
+    \end{center}
+    
+    \caption{Class distribution  with SMOTE.}
+    \label{fig:class_distribuition_balance}
+\end{figure}
+
 
 \section{Modeling}
 In order to train the proposed models with enhanced reliability the internal-external cross-validation is used.
