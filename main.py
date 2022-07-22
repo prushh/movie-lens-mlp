@@ -16,7 +16,7 @@ def main() -> int:
 
     if args.model == 'mlp':
         # TODO: test inside mlp
-        mlp(final, args.easy)
+        mlp(final, args.easy, args.test)
     else:
         fit_model(final, args.model, args.easy, args.input, args.test)
 

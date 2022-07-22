@@ -1,12 +1,15 @@
 import os
+from itertools import cycle
 
 import matplotlib.pyplot
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
+from sklearn.metrics import roc_curve, auc
+from sklearn.preprocessing import label_binarize
 
-from src.utils.const import FIGURE_DIR
+from src.utils.const import FIGURE_DIR, NUM_BINS
 
 custom_params = {
     'figure.figsize': (16, 8),
@@ -17,12 +20,12 @@ custom_params = {
     'ytick.labelsize': 15
 }
 
+
 # sns.set_theme(rc=custom_params)
-#sns.set_palette('bright')
+# sns.set_palette('bright')
 
 
 def show_class_distribution(df: pd.DataFrame):
-
     sns.set_theme(rc=custom_params)
     sns.set_palette('bright')
     distribution = (df.reset_index()
@@ -128,3 +131,109 @@ def kdeplot(x_values: pd.Series, title: str, xlabel: str, ylabel: str, filename:
         plt.show()
     else:
         plt.close()
+
+
+def plot_roc(y_test, y_pred_proba, model_name):
+    # Metric ROC AUC
+    classes = [i for i in range(y_pred_proba.shape[1])]
+    y_test = label_binarize(y_test, classes=classes)
+
+    n_class = y_test.shape[1]
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+    for i in range(n_class):
+        fpr[i], tpr[i], _ = roc_curve(y_test[:, i], y_pred_proba[:, i])
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    # Plot of a ROC curve for a specific class
+    fig, ax = plt.subplots()
+    for i in range(n_class):
+        ax.plot(fpr[i], tpr[i], label=f'ROC curve class {i} (area = {round(roc_auc[i],2)})')
+    ax.plot([0, 1], [0, 1], 'k--')
+
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title(f'Receiver operating characteristic model {model_name}')
+    ax.legend(loc="lower right")
+    plt.show()
+
+
+def plot_roc_multiclass(y_test, y_pred_proba, is_training=False):
+    """
+    This function returns ROC AUC score calculated with a 'one-vs-rest'
+    approach. If called during training and validation it returns only
+    ROC AUC score, else, if called during performance measure stage, it
+    will also plots roc curves for each class.
+    Code adapted from:
+    https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
+    """
+
+    classes = [i for i in range(y_pred_proba.shape[1])]
+
+    # binarize: [2] -> [0,0,1,0,0,0,0,0,0]
+    y_test = label_binarize(y_test, classes=classes)
+    n_classes = y_test.shape[1]
+    fpr = dict()
+    tpr = dict()
+    roc_auc = dict()
+
+    for i in range(n_classes):
+        fpr[i], tpr[i], _ = roc_curve(y_test[:, i], y_pred_proba[:, i])
+        # roc_auc_score(y_test, y_pred_proba, multi_class='ovr') is the same as sum all auc (fpr[i], tpr[i])
+        # and divide them for n_classes
+        roc_auc[i] = auc(fpr[i], tpr[i])
+
+    # first aggregate all false positive rates
+    all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
+
+    # then interpolate all ROC curves at this points
+    mean_tpr = np.zeros_like(all_fpr)
+    for i in range(n_classes):
+        mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])
+
+    # finally average it and compute AUC
+    mean_tpr /= n_classes
+
+    fpr["macro"] = all_fpr
+    tpr["macro"] = mean_tpr
+    roc_auc["macro"] = auc(fpr["macro"], tpr["macro"])
+
+    # ROC AUC score calculated during training, no plots needed
+    if is_training:
+        return roc_auc["macro"]
+
+    # Plot all ROC curves at test time
+    colors = cycle(['red',
+                    'slategrey',
+                    'firebrick',
+                    'aqua',
+                    'olive',
+                    'darkorange',
+                    'darkviolet',
+                    'cornflowerblue',
+                    'darkslategrey',
+                    'gold'])
+    for i, color in zip(range(n_classes), colors):
+        plt.plot(
+            fpr[i],
+            tpr[i],
+            color=color,
+            lw=2,
+            label='ROC curve of class {0} (area = {1:0.2f})'.format(i, roc_auc[i]),
+        )
+
+    plt.plot([0, 1], [0, 1], 'k--', lw=2)
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title(f'Receiver Operating Characteristic multiclass ')
+    plt.legend(loc='lower right')
+    #plt.savefig(join(plots_dir, f'roc_curve_{model_type}{fold}'))
+    #plt.clf()
+    plt.show()
+
+    return roc_auc["macro"]

@@ -11,6 +11,7 @@ from sklearn.preprocessing import label_binarize
 
 from src.utils.const import NUM_BINS
 from src.utils.util_models import get_correct_samples
+from src.visualization.visualize import plot_roc, plot_roc_multiclass
 
 
 def validate(model: nn.Module,
@@ -59,9 +60,9 @@ def validate(model: nn.Module,
     return loss_val, accuracy, f_score
 
 
-def test(model: nn.Module,
+def test_perf(model: nn.Module,
          data_loader: utils.data.DataLoader,
-         device: torch.device) -> Tuple[float, float]:
+         device: torch.device) -> None:
     """
     Evaluates the model
     :param model: the model to evaluate
@@ -86,30 +87,9 @@ def test(model: nn.Module,
         y_pred = y_pred_prob.argmax(dim=1, keepdim=True)
 
     targets_name = [str(i) for i in np.arange(0, y_pred_prob.shape[1])]
+
     print(classification_report(y_test, y_pred, target_names=targets_name, zero_division=0))
 
-    # Metric ROC AUC
-    classes = [i for i in range(y_pred_prob.shape[1])]
-    y_test = label_binarize(y_test, classes=classes)
-    y_pred = label_binarize(y_pred, classes=classes)
 
-    fpr = dict()
-    tpr = dict()
-    roc_auc = dict()
-    for i in range(NUM_BINS):
-        fpr[i], tpr[i], _ = roc_curve(y_test[:, i], y_pred[:, i])
-        roc_auc[i] = auc(fpr[i], tpr[i])
+    plot_roc(y_test=y_test, y_pred_proba=y_pred_prob, model_name='MLP')
 
-    # Plot of a ROC curve for a specific class
-    for i in range(NUM_BINS):
-        plt.figure()
-        plt.plot(fpr[i], tpr[i], label='ROC curve (area = %0.2f)' % roc_auc[i])
-        plt.plot([0, 1], [0, 1], 'k--')
-        plt.xlim([0.0, 1.0])
-        plt.ylim([0.0, 1.05])
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positive Rate')
-        plt.title('Receiver operating characteristic example')
-        plt.legend(loc="lower right")
-        plt.show()
-    return (1, 1)

@@ -8,13 +8,14 @@ import pandas as pd
 from imblearn.over_sampling import SMOTE
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import zero_one_loss, accuracy_score, f1_score
-from sklearn.model_selection import GridSearchCV, StratifiedKFold
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler, Normalizer
 
-from src.models.config import param_grid_model
+from src.models.config import param_grid_model, best_param_grid_model
 from src.utils.const import NUM_BINS, MODEL_RESULTS_CSV, MODEL_RESULTS_DIR
 from src.utils.util_models import add_row_to_df_sk
+from src.visualization.visualize import plot_roc
 
 
 def balance(train_data: pd.DataFrame, train_target: pd.Series) -> Tuple:
@@ -127,16 +128,46 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, model_to_te
 
                 print(f'loss={loss:3f}, acc={acc:3f} ,f1-score={f1_test:3f}, cfg={search.best_params_}')
 
-            print(f'[{model_name}] [test] Mean accuracy: {np.mean(outer_results):3f} - Mean f1-score: {np.mean(outer_f1_results):3f}')
+            print(
+                f'[{model_name}] [test] Mean accuracy: {np.mean(outer_results):3f} - Mean f1-score: {np.mean(outer_f1_results):3f}')
     else:
-        # TODO: Use only 20% of dataset?
-        test_eval(model_to_test, data, target)
+        correct_param_grid = best_param_grid_model[model_group]
+
+        for model_name, estimator, param_grid in correct_param_grid:
+            train_idx, test_idx = train_test_split(range(len(data)), test_size=0.2, stratify=target)
+
+            train_data, test_data = data.iloc[train_idx, :], data.iloc[test_idx, :]
+            train_target, test_target = target[train_idx], target[test_idx]
+
+            train_data_smt, train_target_smt = balance(train_data, train_target)
+            train_data_proc, test_data_proc = preprocess(train_data_smt, test_data)
+
+            print(f'Fitting model: {model_name}..')
+            # search = GridSearchCV(estimator=estimator,
+            #                       param_grid=param_grid,
+            #                       scoring='accuracy',
+            #                       cv=2,
+            #                       refit=True,
+            #                       n_jobs=-1,
+            #                       verbose=3)
+            #
+            # search.fit(train_data_proc, train_target_smt)
+            estimator.fit(train_data_proc, train_target_smt)
+            if model_name == 'decision_tree_classifier':
+                is_tree = True
+            else:
+                is_tree = False
+
+            test_eval(estimator, test_data_proc, target, is_tree, model_name)
 
 
-def test_eval(filepath: str, test_data, test_target):
-    estimator = pickle.load(open(filepath, 'rb'))
-    y_pred = estimator.predict(test_data)
+def test_eval(est, test_data, test_target, is_tree: bool, model_name: str):
+    print(f'{test_target.shape} - {test_data.shape}')
+    y_pred_prob = est.predict_proba(test_data)
+    y_pred = est.predict(test_data)
     acc = accuracy_score(test_target, y_pred)
     loss = zero_one_loss(test_target, y_pred)
     f1_test = f1_score(test_target, y_pred)
     print(f'loss={loss:3f}, accuracy={acc:3f}, f1_score={f1_test:3f}')
+    if not is_tree:
+        plot_roc(test_target, y_pred_prob, model_name)
