@@ -5,13 +5,10 @@ import torch
 import torch.nn as nn
 import torch.utils as utils
 import torch.nn.functional as F
-from matplotlib import pyplot as plt
-from sklearn.metrics import classification_report, roc_curve, auc, f1_score
-from sklearn.preprocessing import label_binarize
+from sklearn.metrics import classification_report, f1_score
 
-from src.utils.const import NUM_BINS
 from src.utils.util_models import get_correct_samples
-from src.visualization.visualize import plot_roc, plot_roc_multiclass
+from src.visualization.visualize import plot_roc
 
 
 def validate(model: nn.Module,
@@ -60,9 +57,9 @@ def validate(model: nn.Module,
     return loss_val, accuracy, f_score
 
 
-def test_perf(model: nn.Module,
-         data_loader: utils.data.DataLoader,
-         device: torch.device) -> None:
+def test_eval(model: nn.Module,
+              data_loader: utils.data.DataLoader,
+              device: torch.device) -> None:
     """
     Evaluates the model
     :param model: the model to evaluate
@@ -89,7 +86,5 @@ def test_perf(model: nn.Module,
     targets_name = [str(i) for i in np.arange(0, y_pred_prob.shape[1])]
 
     print(classification_report(y_test, y_pred, target_names=targets_name, zero_division=0))
-
-
     plot_roc(y_test=y_test, y_pred_proba=y_pred_prob, model_name='MLP')
 

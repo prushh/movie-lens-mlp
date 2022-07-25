@@ -19,7 +19,7 @@ from torch.optim import lr_scheduler
 from src.data.dataset import MovieDataset
 from src.models.config import param_layers, param_grid_mlp, best_param_layers, best_param_grid_mlp
 from src.models.network.train import train
-from src.models.network.validate import validate, test_perf
+from src.models.network.validate import validate, test_eval
 from src.utils.const import NETWORK_RESULTS_DIR, NETWORK_RESULT_CSV
 from src.utils.util_models import balancer, add_row_to_df
 
@@ -421,7 +421,7 @@ def mlp(df: pd.DataFrame, easy_params: bool, test: bool):
         loader_test = utils.data.DataLoader(data_test, batch_size=1,
                                             shuffle=False,
                                             num_workers=num_workers)
-        
+
         train_idx_inner, val_idx = train_test_split(range(len(dataset.X[train_idx])), test_size=0.2)
 
         # Balancing
@@ -474,11 +474,11 @@ def mlp(df: pd.DataFrame, easy_params: bool, test: bool):
                                         momentum=momentum,
                                         weight_decay=weight_decay)
 
-        fold_stat = execute(name_train,
-                            network,
-                            optimizer,
-                            num_epochs,
-                            loader_train,
-                            loader_val,
-                            device)
-        test_perf(network, loader_test, device)
+        _ = execute(name_train,
+                    network,
+                    optimizer,
+                    num_epochs,
+                    loader_train,
+                    loader_val,
+                    device)
+        test_eval(network, loader_test, device)
