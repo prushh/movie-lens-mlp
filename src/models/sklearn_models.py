@@ -143,31 +143,46 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, model_to_te
             train_data_proc, test_data_proc = preprocess(train_data_smt, test_data)
 
             print(f'Fitting model: {model_name}..')
-            # search = GridSearchCV(estimator=estimator,
-            #                       param_grid=param_grid,
-            #                       scoring='accuracy',
-            #                       cv=2,
-            #                       refit=True,
-            #                       n_jobs=-1,
-            #                       verbose=3)
-            #
-            # search.fit(train_data_proc, train_target_smt)
-            estimator.fit(train_data_proc, train_target_smt)
+            search = GridSearchCV(estimator=estimator,
+                                  param_grid=param_grid,
+                                  scoring='accuracy',
+                                  cv=2,
+                                  refit=True,
+                                  n_jobs=-1,
+                                  verbose=0)
+
+            search.fit(train_data_proc, train_target_smt)
+            best_model = search.best_estimator_
+
+            # filename = f'{model_name}.pkl'
+            # filepath = os.path.join(MODEL_RESULTS_DIR, filename)
+            # loaded_model = pickle.load(open(filepath, 'rb'))
             if model_name == 'decision_tree_classifier':
                 is_tree = True
             else:
                 is_tree = False
 
-            test_eval(estimator, test_data_proc, target, is_tree, model_name)
+            test_eval(best_model, test_data_proc, target[test_idx], model_name)
 
 
-def test_eval(est, test_data, test_target, is_tree: bool, model_name: str):
-    print(f'{test_target.shape} - {test_data.shape}')
-    y_pred_prob = est.predict_proba(test_data)
+def test_eval(est, test_data, test_target, model_name: str):
+    is_tree = False
+    is_svm = False
+    if model_name == 'decision_tree_classifier':
+        is_tree = True
+    elif model_name == 'svc':
+        is_svm = True
+    if is_svm:
+        y_pred_prob = est.decision_function(test_data)
+    else:
+        y_pred_prob = est.predict_proba(test_data)
+
     y_pred = est.predict(test_data)
     acc = accuracy_score(test_target, y_pred)
     loss = zero_one_loss(test_target, y_pred)
-    f1_test = f1_score(test_target, y_pred)
+    f1_test = f1_score(test_target, y_pred, average='weighted')
+
     print(f'loss={loss:3f}, accuracy={acc:3f}, f1_score={f1_test:3f}')
+
     if not is_tree:
         plot_roc(test_target, y_pred_prob, model_name)
