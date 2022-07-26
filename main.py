@@ -18,13 +18,13 @@ def main() -> int:
         # TODO: test inside mlp
         mlp(final, args.easy, args.test)
     else:
-        fit_model(final, args.model, args.easy, args.test, args.input)
+        fit_model(final, args.model, args.easy, args.best, args.roc)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Data Analytics project using MovieLens dataset.',
-        usage='%(prog)s model [--train -e] | [--test [-i FILENAME]]'
+        usage='%(prog)s model [--easy | --best] [--roc]'
     )
 
     parser.add_argument(
@@ -33,33 +33,23 @@ if __name__ == '__main__':
         help='the name of the model'
     )
     parser.add_argument(
-        '--train', default=False,
-        action='store_true',
-        help='train specified model'
-    )
-    parser.add_argument(
         '-e', '--easy', default=False,
         action='store_true',
-        help='demo purpose, reduce hyperparams space'
+        help='demo purpose, use only one random configuration for hyperparams'
     )
     parser.add_argument(
-        '--test', default=False,
+        '-b', '--best', default=False,
         action='store_true',
-        help='test model specified by filename'
+        help='use the best training configuration'
     )
     parser.add_argument(
-        '-i', '--input', default='none', type=str,
-        help='the output folder of the experiment'
+        '-r', '--roc', default=False,
+        action='store_true',
+        help='plot the roc graph during the test'
     )
 
     args = parser.parse_args()
-    if args.train and args.test:
-        parser.error('specify only --train or --test, not both together')
-
-    if args.test and args.easy:
-        parser.error('specify --easy only with --train flag')
-
-    if args.train and not (args.input == 'none'):
-        parser.error('specify --input only with --test flag')
+    if args.easy and args.best:
+        parser.error('specify only --easy or --best, not both together')
 
     exit(main())
