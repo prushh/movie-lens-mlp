@@ -133,9 +133,13 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
             f'[{model_name}] [test] Mean accuracy: {np.mean(outer_results):3f} - Mean f1-score: {np.mean(outer_f1_results):3f}')
 
 
-def test_eval(fold: int, model_name: str, test_data: pd.DataFrame, test_target: pd.DataFrame, roc: bool) -> Tuple:
+def test_eval(fold: int, model_name: str, test_data: pd.DataFrame, test_target: pd.DataFrame, roc: bool,
+              notebook: bool = False) -> Tuple:
     filename = f'{fold}_{model_name}.pkl'
-    filepath = os.path.join(MODEL_RESULTS_DIR, model_name, filename)
+    if notebook:
+        filepath = os.path.join('..', MODEL_RESULTS_DIR, model_name, filename)
+    else:
+        filepath = os.path.join(MODEL_RESULTS_DIR, model_name, filename)
     est = pickle.load(open(filepath, 'rb'))
 
     is_tree, is_svm = False, False

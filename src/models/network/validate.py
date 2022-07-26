@@ -63,7 +63,7 @@ def test_eval(model_fold: int,
               data_loader: utils.data.DataLoader,
               device: torch.device,
               criterion: Callable[[torch.Tensor, torch.Tensor], float],
-              roc: bool) -> Tuple:
+              roc: bool = False) -> Tuple:
     """
     Evaluates the model
     :param model_fold: the saved model specified by fold index
@@ -107,9 +107,9 @@ def test_eval(model_fold: int,
     accuracy = 100. * correct / samples_val
     f_score = f1_score(y_test.cpu(), y_pred.cpu(), average='weighted')
 
-    targets_name = [str(i) for i in np.arange(0, y_pred_prob.shape[1])]
-
-    print(classification_report(y_test, y_pred, target_names=targets_name, zero_division=0))
-    plot_roc(y_test=y_test, y_pred_proba=y_pred_prob, model_name='MLP')
+    if roc:
+        targets_name = [str(i) for i in np.arange(0, y_pred_prob.shape[1])]
+        print(classification_report(y_test, y_pred, target_names=targets_name, zero_division=0))
+        plot_roc(y_test=y_test, y_pred_proba=y_pred_prob, model_name='MLP')
 
     return loss_val, accuracy, f_score
