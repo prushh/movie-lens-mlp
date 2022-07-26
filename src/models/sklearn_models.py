@@ -160,9 +160,12 @@ def test_eval(fold: int, model_name: str, test_data: pd.DataFrame, test_target: 
     return acc, loss, f1_test
 
 
-def save_fold_model(fold: int, model_name: str, best_est) -> None:
+def save_fold_model(fold: int, model_name: str, best_est, notebook: bool = False) -> None:
     filename = f'{fold}_{model_name}.pkl'
-    fold_model_results_dir = os.path.join(MODEL_RESULTS_DIR, model_name)
+    if notebook:
+        fold_model_results_dir = os.path.join('..', MODEL_RESULTS_DIR, model_name)
+    else:
+        fold_model_results_dir = os.path.join(MODEL_RESULTS_DIR, model_name)
     if not os.path.exists(fold_model_results_dir):
         os.mkdir(fold_model_results_dir)
 

@@ -10,7 +10,7 @@ import torch
 import torch.nn as nn
 import torch.utils as utils
 from sklearn import preprocessing
-from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.model_selection import StratifiedKFold
 from torch.nn import CrossEntropyLoss
 from torchinfo import summary
 from torch.utils import tensorboard
@@ -232,8 +232,9 @@ def execute(
             'f1_val': np.mean(statistics['val_f1_values'])}
 
 
-def mlp(df: pd.DataFrame, easy_params: bool, test: bool):
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+def mlp(df: pd.DataFrame, easy_params: bool, best_conf: bool, roc: bool):
+    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cpu')
     if device.type == 'cuda':
         print('Using device:', torch.cuda.get_device_name(device))
 
@@ -247,238 +248,176 @@ def mlp(df: pd.DataFrame, easy_params: bool, test: bool):
         dataset.idx_column['rating_count']
     ]
     num_workers = 2
-    if not test:
-        n_splits = 5
-        cv_outer = StratifiedKFold(n_splits=n_splits, shuffle=True)
-        df = pd.DataFrame()
 
-        for fold, (train_idx, test_idx) in enumerate(cv_outer.split(dataset.X, y=dataset.y), 1):
-            hyper_parameters_model_all = itertools.product(
-                param_layers['input_act'],
-                param_layers['hidden_act'],
-                param_layers['hidden_size'],
-                param_layers['num_hidden_layers'],
-                param_layers['dropout'],
-                param_layers['batch_norm'],
-                param_layers['output_fn'],
-                param_grid_mlp['starting_lr'],
-                param_grid_mlp['num_epochs'],
-                param_grid_mlp['batch_size'],
-                param_grid_mlp['optim'],
-                param_grid_mlp['momentum'],
-                param_grid_mlp['weight_decay'],
-            )
+    n_splits = 2
+    cv_outer = StratifiedKFold(n_splits=n_splits, shuffle=True)
+    df = pd.DataFrame()
 
-            if easy_params:
-                # hyper_parameters_model = choice(list(hyper_parameters_model_all))
-                hyper_parameters_model = random_product(hyper_parameters_model_all)
-            else:
-                hyper_parameters_model = hyper_parameters_model_all
+    if not os.path.exists(NETWORK_RESULTS_DIR):
+        os.mkdir(NETWORK_RESULTS_DIR)
+    if not os.path.exists(NETWORK_RESULT_CSV):
+        os.mkdir(NETWORK_RESULT_CSV)
+    interim_model_folder = os.path.join(NETWORK_RESULTS_DIR, 'mlp')
+    if not os.path.exists(interim_model_folder):
+        os.mkdir(interim_model_folder)
 
-            print('=' * 65)
-            print(f'Fold {fold}')
-
-            list_fold_stat = []
-            best_cfg_network = None
-            max_f1_test = 0
-            data_test = utils.data.Subset(dataset, test_idx)
-
-            loader_test = utils.data.DataLoader(data_test, batch_size=1,
-                                                shuffle=False,
-                                                num_workers=num_workers)
-
-            for idx, (input_act,
-                      hidden_act,
-                      hidden_size,
-                      num_hidden_layers,
-                      dropout,
-                      batch_norm,
-                      _,
-                      starting_lr,
-                      num_epochs,
-                      batch_size,
-                      optimizer_class,
-                      momentum,
-                      weight_decay) in enumerate(hyper_parameters_model):
-
-                best_val_network = None
-                max_f1_val = 0
-
-                cfg = (
-                    input_act, hidden_act, hidden_size, num_hidden_layers, dropout, batch_norm, starting_lr, num_epochs,
-                    batch_size, optimizer_class, momentum, weight_decay)
-
-                cv_inner = StratifiedKFold(n_splits=n_splits, shuffle=True)
-
-                for inner_fold, (inner_train_idx, val_idx) in enumerate(
-                        cv_inner.split(dataset.X[train_idx], y=dataset.y[train_idx]), 1):
-
-                    # Balancing
-                    train_target = dataset.y[inner_train_idx]
-                    sampler = balancer(train_target)
-
-                    # Scaling
-                    scaler = preprocessing.MinMaxScaler()
-                    dataset.scale(train_idx, test_idx, scaler, features)
-
-                    data_train = utils.data.Subset(dataset, inner_train_idx)
-                    data_val = utils.data.Subset(dataset, val_idx)
-
-                    loader_train = utils.data.DataLoader(data_train, batch_size=batch_size,
-                                                         sampler=sampler,
-                                                         pin_memory=True,
-                                                         num_workers=num_workers)
-
-                    loader_val = utils.data.DataLoader(data_val, batch_size=1,
-                                                       shuffle=False,
-                                                       num_workers=num_workers)
-
-                    input_size = dataset.X.shape[1]
-                    num_classes = dataset.num_classes
-                    network = MovieNet(input_size=input_size,
-                                       input_act=input_act,
-                                       hidden_size=hidden_size,
-                                       hidden_act=hidden_act,
-                                       num_hidden_layers=num_hidden_layers,
-                                       dropout=dropout,
-                                       output_fn=None,
-                                       num_classes=num_classes)
-                    network.reset_weights()
-                    network.to(device)
-
-                    if fold == 1 and inner_fold == 1:
-                        print('=' * 65)
-                        print(f'Configuration [{idx}]: {cfg}')
-                        summary(network)
-
-                    # TODO: fix experiment name
-                    name_train = f'movie_net_experiment_{idx}'
-
-                    if optimizer_class == torch.optim.Adam:
-                        optimizer = optimizer_class(network.parameters(),
-                                                    lr=starting_lr,
-                                                    weight_decay=weight_decay)
-                    else:
-                        optimizer = optimizer_class(network.parameters(),
-                                                    lr=starting_lr,
-                                                    momentum=momentum,
-                                                    weight_decay=weight_decay)
-
-                    fold_stat = execute(name_train,
-                                        network,
-                                        optimizer,
-                                        num_epochs,
-                                        loader_train,
-                                        loader_val,
-                                        device)
-                    list_fold_stat.append(fold_stat)
-
-                    if fold_stat['f1_val'] >= max_f1_val:
-                        max_f1_val = fold_stat['f1_val']
-                        best_val_network = network
-
-                criterion = CrossEntropyLoss()
-                loss_test, acc_test, f1_test = validate(best_val_network, loader_test, device, criterion)
-
-                print(f'Test {fold}, loss={loss_test:3f}, accuracy={acc_test:3f}, f1={f1_test:3f}')
-
-                df = add_row_to_df(idx, fold, df, loss_test, acc_test, f1_test, list_fold_stat)
-                df.to_csv(os.path.join(NETWORK_RESULT_CSV, 'out.csv'), encoding='utf-8')
-
-                # Find the best cfg network between the already computed configurations
-                if f1_test >= max_f1_test:
-                    max_f1_test = f1_test
-                    best_cfg_network = best_val_network
-
-            if not os.path.exists(NETWORK_RESULTS_DIR):
-                os.mkdir(NETWORK_RESULTS_DIR)
-            path = os.path.join(NETWORK_RESULTS_DIR, f'best_network_{fold}.pt')
-            torch.save(best_cfg_network.state_dict(), path)
-
-        df.to_csv(os.path.join(NETWORK_RESULT_CSV, 'out.csv'), encoding='utf-8')
-    else:
-        cfg = (
-            best_param_layers['input_act'],
-            best_param_layers['hidden_act'],
-            best_param_layers['hidden_size'],
-            best_param_layers['num_hidden_layers'],
-            best_param_layers['dropout'],
-            best_param_layers['batch_norm'],
-            best_param_layers['output_fn'],
-            best_param_grid_mlp['starting_lr'],
-            best_param_grid_mlp['num_epochs'],
-            best_param_grid_mlp['batch_size'],
-            best_param_grid_mlp['optim'],
-            best_param_grid_mlp['momentum'],
-            best_param_grid_mlp['weight_decay']
+    for fold, (train_idx, test_idx) in enumerate(cv_outer.split(dataset.X, y=dataset.y), 1):
+        hyper_parameters_model_all = itertools.product(
+            param_layers['input_act'],
+            param_layers['hidden_act'],
+            param_layers['hidden_size'],
+            param_layers['num_hidden_layers'],
+            param_layers['dropout'],
+            param_layers['batch_norm'],
+            param_layers['output_fn'],
+            param_grid_mlp['starting_lr'],
+            param_grid_mlp['num_epochs'],
+            param_grid_mlp['batch_size'],
+            param_grid_mlp['optim'],
+            param_grid_mlp['momentum'],
+            param_grid_mlp['weight_decay'],
         )
-        print(cfg)
-        input_act, hidden_act, hidden_size, num_hidden_layers, dropout, batch_norm, _, starting_lr, num_epochs, batch_size, optimizer_class, momentum, weight_decay = cfg
 
-        train_idx, test_idx = train_test_split(range(len(dataset.X)), test_size=0.2, stratify=dataset.y)
+        if easy_params:
+            hyper_parameters_model = random_product(hyper_parameters_model_all)
+        elif best_conf:
+            hyper_parameters_model = [(
+                best_param_layers['input_act'],
+                best_param_layers['hidden_act'],
+                best_param_layers['hidden_size'],
+                best_param_layers['num_hidden_layers'],
+                best_param_layers['dropout'],
+                best_param_layers['batch_norm'],
+                best_param_layers['output_fn'],
+                best_param_grid_mlp['starting_lr'],
+                best_param_grid_mlp['num_epochs'],
+                best_param_grid_mlp['batch_size'],
+                best_param_grid_mlp['optim'],
+                best_param_grid_mlp['momentum'],
+                best_param_grid_mlp['weight_decay']
+            )]
+        else:
+            hyper_parameters_model = hyper_parameters_model_all
 
+        print('=' * 65)
+        print(f'Fold {fold}')
+
+        list_fold_stat = []
+        best_cfg_network = None
+        max_f1_test = 0
         data_test = utils.data.Subset(dataset, test_idx)
+
         loader_test = utils.data.DataLoader(data_test, batch_size=1,
                                             shuffle=False,
                                             num_workers=num_workers)
 
-        train_idx_inner, val_idx = train_test_split(range(len(dataset.X[train_idx])), test_size=0.2)
+        for idx, (input_act,
+                  hidden_act,
+                  hidden_size,
+                  num_hidden_layers,
+                  dropout,
+                  batch_norm,
+                  _,
+                  starting_lr,
+                  num_epochs,
+                  batch_size,
+                  optimizer_class,
+                  momentum,
+                  weight_decay) in enumerate(hyper_parameters_model):
 
-        # Balancing
-        train_target = dataset.y[train_idx_inner]
-        sampler = balancer(train_target)
+            best_val_network = None
+            max_f1_val = 0
 
-        # Scaling
-        scaler = preprocessing.MinMaxScaler()
-        dataset.scale(train_idx, test_idx, scaler, features)
+            cfg = (
+                input_act, hidden_act, hidden_size, num_hidden_layers, dropout, batch_norm, starting_lr, num_epochs,
+                batch_size, optimizer_class, momentum, weight_decay)
 
-        data_train = utils.data.Subset(dataset, train_idx_inner)
-        data_val = utils.data.Subset(dataset, val_idx)
+            cv_inner = StratifiedKFold(n_splits=n_splits, shuffle=True)
 
-        loader_train = utils.data.DataLoader(data_train, batch_size=batch_size,
-                                             sampler=sampler,
-                                             pin_memory=True,
-                                             num_workers=num_workers)
+            for inner_fold, (inner_train_idx, val_idx) in enumerate(
+                    cv_inner.split(dataset.X[train_idx], y=dataset.y[train_idx]), 1):
 
-        loader_val = utils.data.DataLoader(data_val, batch_size=1,
-                                           shuffle=False,
-                                           num_workers=num_workers)
+                # Balancing
+                train_target = dataset.y[inner_train_idx]
+                sampler = balancer(train_target)
 
-        input_size = dataset.X.shape[1]
-        num_classes = dataset.num_classes
-        network = MovieNet(input_size=input_size,
-                           input_act=input_act,
-                           hidden_size=hidden_size,
-                           hidden_act=hidden_act,
-                           num_hidden_layers=num_hidden_layers,
-                           dropout=dropout,
-                           output_fn=None,
-                           num_classes=num_classes)
-        network.reset_weights()
-        network.to(device)
+                # Scaling
+                scaler = preprocessing.MinMaxScaler()
+                dataset.scale(train_idx, test_idx, scaler, features)
 
-        print('=' * 65)
-        print(f'Configuration : {cfg}')
-        summary(network)
+                data_train = utils.data.Subset(dataset, inner_train_idx)
+                data_val = utils.data.Subset(dataset, val_idx)
 
-        # TODO: fix experiment name
-        name_train = f'test_movie_net'
+                loader_train = utils.data.DataLoader(data_train, batch_size=batch_size,
+                                                     sampler=sampler,
+                                                     pin_memory=True,
+                                                     num_workers=num_workers)
 
-        if optimizer_class == torch.optim.Adam:
-            optimizer = optimizer_class(network.parameters(),
-                                        lr=starting_lr,
-                                        weight_decay=weight_decay)
-        else:
-            optimizer = optimizer_class(network.parameters(),
-                                        lr=starting_lr,
-                                        momentum=momentum,
-                                        weight_decay=weight_decay)
+                loader_val = utils.data.DataLoader(data_val, batch_size=1,
+                                                   shuffle=False,
+                                                   num_workers=num_workers)
 
-        _ = execute(name_train,
-                    network,
-                    optimizer,
-                    num_epochs,
-                    loader_train,
-                    loader_val,
-                    device)
-        test_eval(network, loader_test, device)
+                input_size = dataset.X.shape[1]
+                num_classes = dataset.num_classes
+                network = MovieNet(input_size=input_size,
+                                   input_act=input_act,
+                                   hidden_size=hidden_size,
+                                   hidden_act=hidden_act,
+                                   num_hidden_layers=num_hidden_layers,
+                                   dropout=dropout,
+                                   output_fn=None,
+                                   num_classes=num_classes)
+                network.reset_weights()
+                network.to(device)
+
+                if fold == 1 and inner_fold == 1:
+                    print('=' * 65)
+                    print(f'Configuration [{idx}]: {cfg}')
+                    summary(network)
+
+                # TODO: fix experiment name
+                name_train = f'movie_net_experiment_{idx}'
+
+                if optimizer_class == torch.optim.Adam:
+                    optimizer = optimizer_class(network.parameters(),
+                                                lr=starting_lr,
+                                                weight_decay=weight_decay)
+                else:
+                    optimizer = optimizer_class(network.parameters(),
+                                                lr=starting_lr,
+                                                momentum=momentum,
+                                                weight_decay=weight_decay)
+
+                fold_stat = execute(name_train,
+                                    network,
+                                    optimizer,
+                                    num_epochs,
+                                    loader_train,
+                                    loader_val,
+                                    device)
+                list_fold_stat.append(fold_stat)
+
+                if fold_stat['f1_val'] >= max_f1_val:
+                    max_f1_val = fold_stat['f1_val']
+                    best_val_network = network
+
+            path = os.path.join(interim_model_folder, f'{fold}_network.pt')
+            torch.save(best_val_network, path)
+
+            criterion = CrossEntropyLoss()
+            loss_test, acc_test, f1_test = test_eval(fold, loader_test, device, criterion, roc)
+            print(f'Test {fold}, loss={loss_test:3f}, accuracy={acc_test:3f}, f1={f1_test:3f}')
+
+            df = add_row_to_df(idx, fold, df, loss_test, acc_test, f1_test, list_fold_stat)
+
+            df.to_csv(os.path.join(NETWORK_RESULT_CSV, 'out.csv'), encoding='utf-8')
+
+            # Find the best cfg network between the already computed configurations
+            if f1_test >= max_f1_test:
+                max_f1_test = f1_test
+                best_cfg_network = best_val_network
+
+        path = os.path.join(NETWORK_RESULTS_DIR, f'best_network_{fold}.pt')
+        torch.save(best_cfg_network, path)
+
+    df.to_csv(os.path.join(NETWORK_RESULT_CSV, 'out.csv'), encoding='utf-8')

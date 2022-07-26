@@ -82,20 +82,29 @@ best_param_grid_model = {
 }
 
 best_param_layers = {
-    'input_act': [nn.LeakyReLU()],
-    'hidden_act': [nn.LeakyReLU()],
-    'hidden_size': [512],
-    'num_hidden_layers': [3],
-    'dropout': [0.2],
-    'batch_norm': [True],
-    'output_fn': [None]
+    'input_act': nn.LeakyReLU(),
+    'hidden_act': nn.LeakyReLU(),
+    'hidden_size': 512,
+    'num_hidden_layers': 3,
+    'dropout': 0.2,
+    'batch_norm': True,
+    'output_fn': None
 }
 
+# best_param_grid_mlp = {
+#     'num_epochs': 50,
+#     'starting_lr': 1e-3,
+#     'batch_size': 128,
+#     'optim': torch.optim.Adam,
+#     'momentum': 0.9,
+#     'weight_decay': 1e-5
+# }
+
 best_param_grid_mlp = {
-    'num_epochs': [50],
-    'starting_lr': [1e-3],
-    'batch_size': [128],
-    'optim': [torch.optim.Adam],
-    'momentum': [0.9],
-    'weight_decay': [1e-5]
+    'num_epochs': 5,
+    'starting_lr': 1e-3,
+    'batch_size': 128,
+    'optim': torch.optim.Adam,
+    'momentum': 0.9,
+    'weight_decay': 1e-5
 }

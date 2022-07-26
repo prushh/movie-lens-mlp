@@ -15,8 +15,7 @@ def main() -> int:
     final = preprocessing()
 
     if args.model == 'mlp':
-        # TODO: test inside mlp
-        mlp(final, args.easy, args.test)
+        mlp(final, args.easy, args.best, args.roc)
     else:
         fit_model(final, args.model, args.easy, args.best, args.roc)
 
