@@ -210,7 +210,7 @@ def execute(
 
     # Learning Rate schedule: decays the learning rate by a factor of `gamma`
     # every `step_size` epochs
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.2)
 
     statistics = training_loop(writer, num_epochs, optimizer, scheduler,
                                log_interval, network, data_loader_train,

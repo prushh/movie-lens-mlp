@@ -27,25 +27,25 @@ from sklearn.tree import DecisionTreeClassifier
 #     'weight_decay': [1e-7]
 # }
 
-#first set of params
-param_layers = {
+best_param_layers = {
     'input_act': [nn.LeakyReLU()],
     'hidden_act': [nn.LeakyReLU()],
     'hidden_size': [512],
-    'num_hidden_layers': [3, 5],
-    'dropout': [0.2, 0.3, 0.5],
-    'batch_norm': [False, True],
+    'num_hidden_layers': [3],
+    'dropout': [0.2],
+    'batch_norm': [True, False],
     'output_fn': [None]
 }
 
-param_grid_mlp = {
+best_param_grid_mlp = {
     'num_epochs': [200],
     'starting_lr': [1e-3],
-    'batch_size': [128, 256],
-    'optim': [torch.optim.Adam, torch.optim.SGD],
-    'momentum': [0.6, 0.9],
-    'weight_decay': [1e-5, 1e-7]
+    'batch_size': [16, 32, 64, 512, 2048, 16384],
+    'optim': [torch.optim.Adam],
+    'momentum': [0.9],
+    'weight_decay': [1e-5]
 }
+
 # TEST CONFIGURATION
 # param_layers = {
 #     'input_act': [nn.ReLU()],
@@ -65,6 +65,8 @@ param_grid_mlp = {
 #     'momentum': [0.9],
 #     'weight_decay': [0.000001]
 # }
+
+
 
 param_grid_svc = {
     'C': [0.1, 1, 10, 100],
