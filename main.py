@@ -18,7 +18,7 @@ def main() -> int:
         # TODO: test inside mlp
         mlp(final, args.easy, args.test)
     else:
-        fit_model(final, args.model, args.easy, args.input, args.test)
+        fit_model(final, args.model, args.easy, args.test, args.input)
 
 
 if __name__ == '__main__':

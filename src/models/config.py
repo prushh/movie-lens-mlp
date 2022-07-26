@@ -73,7 +73,7 @@ best_param_grid_model = {
         ('decision_tree_classifier', DecisionTreeClassifier(), {'criterion': ['entropy'], 'max_depth': [15]})
     ],
     'svm': [
-        ('svc', SVC(), {'C': 100, 'gamma': 0.01, 'kernel': 'rbf'})
+        ('svc', SVC(), {'C': [100], 'gamma': [0.01], 'kernel': ['rbf']})
     ],
     'naive_bayes': [
         ('gaussian_nb', GaussianNB(), {'var_smoothing': [8.111308307896872e-07]}),

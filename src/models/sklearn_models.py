@@ -56,7 +56,7 @@ def preprocess(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Tuple:
     return train_data_proc, test_data_proc
 
 
-def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, test: bool):
+def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, test: bool, input):
     df = (df
           .assign(rating_discrete=pd.cut(df.loc[:, 'rating_mean'], bins=NUM_BINS, labels=False))
           .astype({'rating_discrete': 'int32'})
@@ -165,7 +165,8 @@ def test_eval(est, test_data, test_target, model_name: str):
     elif model_name == 'svc':
         is_svm = True
     if is_svm:
-        y_pred_prob = est.decision_function(test_data)
+        p = np.array(est.decision_function(test_data))
+        y_pred_prob = np.exp(p) / np.sum(np.exp(p), axis=1, keepdims=True)
     else:
         y_pred_prob = est.predict_proba(test_data)
 
