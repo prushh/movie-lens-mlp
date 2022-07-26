@@ -27,7 +27,7 @@ from sklearn.tree import DecisionTreeClassifier
 #     'weight_decay': [1e-7]
 # }
 
-best_param_layers = {
+param_layers = {
     'input_act': [nn.LeakyReLU()],
     'hidden_act': [nn.LeakyReLU()],
     'hidden_size': [512],
@@ -37,7 +37,7 @@ best_param_layers = {
     'output_fn': [None]
 }
 
-best_param_grid_mlp = {
+param_grid_mlp = {
     'num_epochs': [200],
     'starting_lr': [1e-3],
     'batch_size': [16, 32, 64, 512, 2048, 16384],
@@ -65,7 +65,6 @@ best_param_grid_mlp = {
 #     'momentum': [0.9],
 #     'weight_decay': [0.000001]
 # }
-
 
 
 param_grid_svc = {
