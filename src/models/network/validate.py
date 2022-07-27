@@ -110,6 +110,6 @@ def test_eval(model_fold: int,
     f_score = f1_score(y_test.cpu(), y_pred.cpu(), average='weighted')
 
     targets_name = [str(i) for i in np.arange(0, y_pred_prob.shape[1])]
-    print(classification_report(y_test, y_pred, target_names=targets_name, zero_division=0))
+    print(classification_report(y_test.cpu(), y_pred.cpu(), target_names=targets_name, zero_division=0))
 
     return loss_val, accuracy, f_score
