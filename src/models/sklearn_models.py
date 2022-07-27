@@ -64,6 +64,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
     data = df.loc[:, df.columns != 'rating_discrete']
     target = df['rating_discrete']
     df_results = pd.DataFrame()
+    df_grid_results = pd.DataFrame()
 
     N_SPLITS = 5
 
@@ -99,13 +100,18 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
 
             search = GridSearchCV(estimator=estimator,
                                   param_grid=param_grid,
-                                  scoring='accuracy',
+                                  scoring='f1_weighted',
                                   cv=cv_inner,
                                   refit=True,
+                                  return_train_score=True,
                                   n_jobs=-1,
                                   verbose=3)
 
             search.fit(train_data_proc, train_target_smt)
+            row_grid_result = pd.DataFrame(search.cv_results_)
+            df_grid_results = pd.concat([df_grid_results, row_grid_result])
+            print(
+                f"[train] f1-score={search.cv_results_['mean_train_score'][0]} - [val] f1-score={search.cv_results_['mean_test_score'][0]}")
 
             best_model = search.best_estimator_
             save_fold_model(fold, model_name, best_model)
@@ -120,16 +126,17 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
             if not os.path.exists(MODEL_RESULTS_CSV):
                 os.mkdir(MODEL_RESULTS_CSV)
             df_results.to_csv(os.path.join(MODEL_RESULTS_CSV, f'out_{model_group}.csv'), encoding='utf-8')
+            df_grid_results.to_csv(os.path.join(MODEL_RESULTS_CSV, f'out_grid_{model_group}.csv'), encoding='utf-8')
 
             if acc == max(outer_results):
                 filename = f'{model_name}.pkl'
                 filepath = os.path.join(MODEL_RESULTS_DIR, filename)
                 pickle.dump(search.best_estimator_, open(filepath, 'wb'))
 
-            print(f'loss={loss:3f}, acc={acc:3f} ,f1-score={f1_test:3f}, cfg={search.best_params_}')
+            print(f'[test] loss={loss:3f}, acc={acc:3f} ,f1-score={f1_test:3f}, cfg={search.best_params_}')
 
         print(
-            f'[{model_name}] [test] Mean accuracy: {np.mean(outer_results):3f} - Mean f1-score: {np.mean(outer_f1_results):3f}')
+            f'[{model_name}] [mean_test] Mean accuracy: {np.mean(outer_results):3f} - Mean f1-score: {np.mean(outer_f1_results):3f}')
 
 
 def test_eval(fold: int, model_name: str, test_data: pd.DataFrame, test_target: pd.DataFrame,
