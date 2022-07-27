@@ -232,7 +232,7 @@ def execute(
             'f1_val': np.mean(statistics['val_f1_values'])}
 
 
-def mlp(df: pd.DataFrame, easy_params: bool, best_conf: bool, roc: bool):
+def mlp(df: pd.DataFrame, easy_params: bool, best_conf: bool):
     # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     device = torch.device('cpu')
     if device.type == 'cuda':
@@ -405,7 +405,7 @@ def mlp(df: pd.DataFrame, easy_params: bool, best_conf: bool, roc: bool):
             torch.save(best_val_network, path)
 
             criterion = CrossEntropyLoss()
-            loss_test, acc_test, f1_test = test_eval(fold, loader_test, device, criterion, roc)
+            loss_test, acc_test, f1_test = test_eval(fold, loader_test, device, criterion)
             print(f'Test {fold}, loss={loss_test:3f}, accuracy={acc_test:3f}, f1={f1_test:3f}')
 
             df = add_row_to_df(idx, fold, df, loss_test, acc_test, f1_test, list_fold_stat)

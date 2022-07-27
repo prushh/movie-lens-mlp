@@ -10,7 +10,6 @@ from sklearn.metrics import classification_report, f1_score
 
 from src.utils.const import NETWORK_RESULTS_DIR
 from src.utils.util_models import get_correct_samples
-from src.visualization.visualize import plot_roc
 
 
 def validate(model: nn.Module,
@@ -63,7 +62,6 @@ def test_eval(model_fold: int,
               data_loader: utils.data.DataLoader,
               device: torch.device,
               criterion: Callable[[torch.Tensor, torch.Tensor], float],
-              roc: bool = False,
               notebook: bool = False) -> Tuple:
     """
     Evaluates the model
@@ -71,7 +69,6 @@ def test_eval(model_fold: int,
     :param data_loader: the data loader containing the validation or test data
     :param device: the device to use to evaluate the model
     :param criterion: the loss function
-    :param roc: the flag to plot roc graph
     :param notebook: the flag to specify different path for notebook execution
     :return: the loss value and the accuracy on the validation data
     """
@@ -112,9 +109,7 @@ def test_eval(model_fold: int,
     accuracy = 100. * correct / samples_val
     f_score = f1_score(y_test.cpu(), y_pred.cpu(), average='weighted')
 
-    if roc:
-        targets_name = [str(i) for i in np.arange(0, y_pred_prob.shape[1])]
-        print(classification_report(y_test, y_pred, target_names=targets_name, zero_division=0))
-        plot_roc(y_test=y_test, y_pred_proba=y_pred_prob, model_name='MLP')
+    targets_name = [str(i) for i in np.arange(0, y_pred_prob.shape[1])]
+    print(classification_report(y_test, y_pred, target_names=targets_name, zero_division=0))
 
     return loss_val, accuracy, f_score

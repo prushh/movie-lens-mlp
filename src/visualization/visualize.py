@@ -4,8 +4,6 @@ import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
-from sklearn.metrics import roc_curve, auc
-from sklearn.preprocessing import label_binarize
 
 from src.utils.const import FIGURE_DIR
 
@@ -127,31 +125,3 @@ def kdeplot(x_values: pd.Series, title: str, xlabel: str, ylabel: str, filename:
         plt.show()
     else:
         plt.close()
-
-
-def plot_roc(y_test, y_pred_proba, model_name):
-    # Metric ROC AUC
-    classes = [i for i in range(y_pred_proba.shape[1])]
-    y_test = label_binarize(y_test, classes=classes)
-
-    n_class = y_test.shape[1]
-    fpr = dict()
-    tpr = dict()
-    roc_auc = dict()
-    for i in range(n_class):
-        fpr[i], tpr[i], _ = roc_curve(y_test[:, i], y_pred_proba[:, i])
-        roc_auc[i] = auc(fpr[i], tpr[i])
-
-    # Plot of a ROC curve for a specific class
-    fig, ax = plt.subplots()
-    for i in range(n_class):
-        ax.plot(fpr[i], tpr[i], label=f'ROC curve class {i} (area = {round(roc_auc[i], 2)})')
-    ax.plot([0, 1], [0, 1], 'k--')
-
-    ax.set_xlim([0.0, 1.0])
-    ax.set_ylim([0.0, 1.05])
-    ax.set_xlabel('False Positive Rate')
-    ax.set_ylabel('True Positive Rate')
-    ax.set_title(f'Receiver operating characteristic model {model_name}')
-    ax.legend(loc="lower right")
-    plt.show()

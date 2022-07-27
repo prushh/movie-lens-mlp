@@ -8,14 +8,13 @@ import pandas as pd
 from imblearn.over_sampling import SMOTE
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import zero_one_loss, accuracy_score, f1_score
-from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler, Normalizer
 
 from src.models.config import param_grid_model, best_param_grid_model
 from src.utils.const import NUM_BINS, MODEL_RESULTS_CSV, MODEL_RESULTS_DIR
 from src.utils.util_models import add_row_to_df_sk
-from src.visualization.visualize import plot_roc
 
 
 def balance(train_data: pd.DataFrame, train_target: pd.Series) -> Tuple:
@@ -56,7 +55,7 @@ def preprocess(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Tuple:
     return train_data_proc, test_data_proc
 
 
-def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: bool, roc: bool):
+def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: bool):
     df = (df
           .assign(rating_discrete=pd.cut(df.loc[:, 'rating_mean'], bins=NUM_BINS, labels=False))
           .astype({'rating_discrete': 'int32'})
@@ -111,7 +110,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
             best_model = search.best_estimator_
             save_fold_model(fold, model_name, best_model)
 
-            acc, loss, f1_test = test_eval(fold, model_name, test_data_proc, test_target, roc)
+            acc, loss, f1_test = test_eval(fold, model_name, test_data_proc, test_target)
             outer_results.append(acc)
             outer_f1_results.append(f1_test)
             df_results = add_row_to_df_sk(model_name, fold, df_results, loss, acc, f1_test,
@@ -133,7 +132,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
             f'[{model_name}] [test] Mean accuracy: {np.mean(outer_results):3f} - Mean f1-score: {np.mean(outer_f1_results):3f}')
 
 
-def test_eval(fold: int, model_name: str, test_data: pd.DataFrame, test_target: pd.DataFrame, roc: bool,
+def test_eval(fold: int, model_name: str, test_data: pd.DataFrame, test_target: pd.DataFrame,
               notebook: bool = False) -> Tuple:
     filename = f'{fold}_{model_name}.pkl'
     if notebook:
@@ -142,24 +141,10 @@ def test_eval(fold: int, model_name: str, test_data: pd.DataFrame, test_target: 
         filepath = os.path.join(MODEL_RESULTS_DIR, model_name, filename)
     est = pickle.load(open(filepath, 'rb'))
 
-    is_tree, is_svm = False, False
-    if model_name == 'decision_tree_classifier':
-        is_tree = True
-    elif model_name == 'svc':
-        is_svm = True
-    if is_svm:
-        p = np.array(est.decision_function(test_data))
-        y_pred_prob = np.exp(p) / np.sum(np.exp(p), axis=1, keepdims=True)
-    else:
-        y_pred_prob = est.predict_proba(test_data)
-
     y_pred = est.predict(test_data)
     acc = accuracy_score(test_target, y_pred)
     loss = zero_one_loss(test_target, y_pred)
     f1_test = f1_score(test_target, y_pred, average='weighted')
-
-    if not is_tree and roc:
-        plot_roc(test_target, y_pred_prob, model_name)
 
     return acc, loss, f1_test
 

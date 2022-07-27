@@ -15,15 +15,15 @@ def main() -> int:
     final = preprocessing()
 
     if args.model == 'mlp':
-        mlp(final, args.easy, args.best, args.roc)
+        mlp(final, args.easy, args.best)
     else:
-        fit_model(final, args.model, args.easy, args.best, args.roc)
+        fit_model(final, args.model, args.easy, args.best)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Data Analytics project using MovieLens dataset.',
-        usage='%(prog)s model [--easy | --best] [--roc]'
+        usage='%(prog)s model [--easy | --best]'
     )
 
     parser.add_argument(
@@ -40,11 +40,6 @@ if __name__ == '__main__':
         '-b', '--best', default=False,
         action='store_true',
         help='use the best training configuration'
-    )
-    parser.add_argument(
-        '-r', '--roc', default=False,
-        action='store_true',
-        help='plot the roc graph during the test'
     )
 
     args = parser.parse_args()
