@@ -1,0 +1,11 @@
+,model,fold,loss_test,acc_test,f1_test,cfg
+0,random_forest_classifier,1,0.38783269961977185,0.6121673003802282,0.6144914779952338,"{'max_depth': 4, 'max_features': 'sqrt', 'n_estimators': 900}"
+1,random_forest_classifier,2,0.3836501901140684,0.6163498098859316,0.6172192391243702,"{'max_depth': 4, 'max_features': 'sqrt', 'n_estimators': 700}"
+2,random_forest_classifier,3,0.40167364016736407,0.5983263598326359,0.6016964143327495,"{'max_depth': 4, 'max_features': 'sqrt', 'n_estimators': 900}"
+3,random_forest_classifier,4,0.39368581209585396,0.606314187904146,0.6073606168119265,"{'max_depth': 4, 'max_features': 'sqrt', 'n_estimators': 700}"
+4,random_forest_classifier,5,0.40205401293267407,0.5979459870673259,0.6004048768392178,"{'max_depth': 4, 'max_features': 'sqrt', 'n_estimators': 700}"
+5,decision_tree_classifier,1,0.3437262357414449,0.6562737642585551,0.6573522320641536,"{'criterion': 'gini', 'max_depth': 15}"
+6,decision_tree_classifier,2,0.35703422053231937,0.6429657794676806,0.6433579736455561,"{'criterion': 'entropy', 'max_depth': 15}"
+7,decision_tree_classifier,3,0.34271586154431344,0.6572841384556866,0.6577652221073759,"{'criterion': 'entropy', 'max_depth': 15}"
+8,decision_tree_classifier,4,0.34575884366679344,0.6542411563332066,0.6549615203741811,"{'criterion': 'entropy', 'max_depth': 15}"
+9,decision_tree_classifier,5,0.37732978318752375,0.6226702168124763,0.6227226649709212,"{'criterion': 'entropy', 'max_depth': 15}"

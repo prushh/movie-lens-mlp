@@ -530,6 +530,8 @@ src/models/network/logs/*
 
 # Ignore the sklearn model results folder
 src/models/results/*
+!src/models/results/csv/
 
 # Ignore the sklearn model results folder
 src/models/network/results/*
+!src/models/network/results/csv/
