@@ -99,3 +99,22 @@ best_param_grid_mlp = {
     'momentum': [0.9],
     'weight_decay': [1e-5]
 }
+
+param_layers_batch = {
+    'input_act': [nn.LeakyReLU()],
+    'hidden_act': [nn.LeakyReLU()],
+    'hidden_size': [512],
+    'num_hidden_layers': [3],
+    'dropout': [0.2],
+    'batch_norm': [True, False],
+    'output_fn': [None]
+}
+
+param_grid_mlp_batch = {
+    'num_epochs': [200],
+    'starting_lr': [1e-3],
+    'batch_size': [16, 32, 64, 512, 2048, 16384],
+    'optim': [torch.optim.Adam],
+    'momentum': [0.9],
+    'weight_decay': [1e-5]
+}
