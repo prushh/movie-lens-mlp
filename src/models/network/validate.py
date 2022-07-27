@@ -63,7 +63,8 @@ def test_eval(model_fold: int,
               data_loader: utils.data.DataLoader,
               device: torch.device,
               criterion: Callable[[torch.Tensor, torch.Tensor], float],
-              roc: bool = False) -> Tuple:
+              roc: bool = False,
+              notebook: bool = False) -> Tuple:
     """
     Evaluates the model
     :param model_fold: the saved model specified by fold index
@@ -71,10 +72,14 @@ def test_eval(model_fold: int,
     :param device: the device to use to evaluate the model
     :param criterion: the loss function
     :param roc: the flag to plot roc graph
+    :param notebook: the flag to specify different path for notebook execution
     :return: the loss value and the accuracy on the validation data
     """
     filename = f'{model_fold}_network.pt'
-    filepath = os.path.join(NETWORK_RESULTS_DIR, 'mlp', filename)
+    if notebook:
+        filepath = os.path.join('..', NETWORK_RESULTS_DIR, 'mlp', filename)
+    else:
+        filepath = os.path.join(NETWORK_RESULTS_DIR, 'mlp', filename)
     model = torch.load(filepath)
 
     correct = 0

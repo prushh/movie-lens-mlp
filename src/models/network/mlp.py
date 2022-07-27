@@ -281,7 +281,7 @@ def mlp(df: pd.DataFrame, easy_params: bool, best_conf: bool, roc: bool):
         if easy_params:
             hyper_parameters_model = random_product(hyper_parameters_model_all)
         elif best_conf:
-            hyper_parameters_model = [(
+            hyper_parameters_model = itertools.product(
                 best_param_layers['input_act'],
                 best_param_layers['hidden_act'],
                 best_param_layers['hidden_size'],
@@ -295,7 +295,7 @@ def mlp(df: pd.DataFrame, easy_params: bool, best_conf: bool, roc: bool):
                 best_param_grid_mlp['optim'],
                 best_param_grid_mlp['momentum'],
                 best_param_grid_mlp['weight_decay']
-            )]
+            )
         else:
             hyper_parameters_model = hyper_parameters_model_all
 
