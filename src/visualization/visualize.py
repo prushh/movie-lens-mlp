@@ -1,4 +1,5 @@
 import os
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -52,8 +53,10 @@ def show_class_distribution(df: pd.DataFrame):
     plt.close()
 
 
-def barplot_multiple_columns(groups: list, elements_group: list, data: list, title: str, filename: str = '',
+def barplot_multiple_columns(groups: List, elements_group: List, data: List, title: str, yerr=None, filename: str = '',
                              save: bool = False, label_count: bool = False) -> None:
+    if yerr is None:
+        yerr = []
     sns.set_theme(rc=custom_params)
 
     sns.set_palette('bright')
@@ -73,7 +76,10 @@ def barplot_multiple_columns(groups: list, elements_group: list, data: list, tit
     # l'elemento avrà cardinalità |len(df['model_name'].unique())|
     for idx, elm in enumerate(elements_group):
         # df[df['balance']==elm][scores].to_numpy().squeeze() = [f1_random, f1_decision, f1_gaussian, f1_quadratic]
-        ax.bar(x=rs[idx], height=data[idx], label=elm, width=width)
+        if yerr:
+            ax.bar(x=rs[idx], height=data[idx], yerr=yerr[idx], label=elm, width=width)
+        else:
+            ax.bar(x=rs[idx], height=data[idx], label=elm, width=width)
         if label_count:
             ax.text(rs[idx], 1.05,
                     data[idx],
