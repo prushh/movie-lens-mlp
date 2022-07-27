@@ -33,14 +33,14 @@ param_layers = {
     'hidden_size': [512],
     'num_hidden_layers': [3],
     'dropout': [0.2],
-    'batch_norm': [True, False],
+    'batch_norm': [True],
     'output_fn': [None]
 }
 
 param_grid_mlp = {
     'num_epochs': [200],
     'starting_lr': [1e-3],
-    'batch_size': [16, 32, 64, 512, 2048, 16384],
+    'batch_size': [2 ** i for i in range(3, 15)],
     'optim': [torch.optim.Adam],
     'momentum': [0.9],
     'weight_decay': [1e-5]
