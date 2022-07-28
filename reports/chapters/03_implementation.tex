@@ -43,17 +43,25 @@ Since the PyTorch model doesn't support that class, it was needed to use itertoo
 It provides only a cartesian product of all configuration values and so it was necessary to define by hand cross validation and other flow controls.
 It is also possible to choose in which mode to execute the project, following this argparse definition:
 \begin{center}
-    % TODO: FILENAME??
-    \texttt{main.py model [--train -e] | [--test [-i FILENAME]]}
+    \texttt{main.py model [--easy | --best]}
 \end{center}
 
-% Ogni modello allenato viene salvato con anche i risultati (csv + modello stesso)
+The next two notebooks show a demo for each of the models used.
+Unlike the implementation in the project files, these do not save output metrics, but merely display them.
 \begin{itemize}
     \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/2.0-sklearn-models.ipynb}{\textit{2.0-sklearn-models}}
     \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/2.1-mlp-model.ipynb}{\textit{2.1-mlp-model}}
 \end{itemize}
+It is therefore necessary to explain how the saving of output metrics is handled.
+The saving of output metrics differs between the two types of models.
+When GridSearchCV is used, it is not possible to test all configurations.
+For this reason, only the metrics of the best performing model are saved in sklearn models.
+While in the neural network, it was possible to save metrics relating to all configurations.
+
 
 \section{Performance analysis}
+The following notebook aims to read and analyse all the csv files containing the output metrics of the various models.
+In particular, useful functions are implemented to find a specific configuration, find the configuration with the best f1-score and print a summary with the metrics of the best configurations.
 \begin{itemize}
     \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/3.0-performance-analysis.ipynb}{\textit{3.0-performance-analysis}}
 \end{itemize}
