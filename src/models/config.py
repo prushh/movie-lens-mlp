@@ -33,7 +33,7 @@ param_layers = {
     'hidden_size': [512],
     'num_hidden_layers': [3],
     'dropout': [0.2],
-    'batch_norm': [True],
+    'batch_norm': [False],
     'output_fn': [None]
 }
 
@@ -43,8 +43,9 @@ param_grid_mlp = {
     'batch_size': [2 ** i for i in range(3, 15)],
     'optim': [torch.optim.Adam],
     'momentum': [0.9],
-    'weight_decay': [1e-5]
+    'weight_decay': [1e-7]
 }
+
 
 # TEST CONFIGURATION
 # param_layers = {
