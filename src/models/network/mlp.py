@@ -252,7 +252,10 @@ def mlp(df: pd.DataFrame, easy_params: bool, best_conf: bool):
     n_splits = 2
     cv_outer = StratifiedKFold(n_splits=n_splits, shuffle=True)
     df = pd.DataFrame()
-
+    if best_conf:
+        filename = 'out_best_mlp.csv'
+    else:
+        filename = 'out_mlp.csv'
     if not os.path.exists(NETWORK_RESULTS_DIR):
         os.mkdir(NETWORK_RESULTS_DIR)
     if not os.path.exists(NETWORK_RESULT_CSV):
@@ -410,7 +413,7 @@ def mlp(df: pd.DataFrame, easy_params: bool, best_conf: bool):
 
             df = add_row_to_df(idx, fold, df, loss_test, acc_test, f1_test, list_fold_stat)
 
-            df.to_csv(os.path.join(NETWORK_RESULT_CSV, 'out.csv'), encoding='utf-8')
+            df.to_csv(os.path.join(NETWORK_RESULT_CSV, filename), encoding='utf-8')
 
             # Find the best cfg network between the already computed configurations
             if f1_test >= max_f1_test:
@@ -420,4 +423,4 @@ def mlp(df: pd.DataFrame, easy_params: bool, best_conf: bool):
         path = os.path.join(NETWORK_RESULTS_DIR, f'best_network_{fold}.pt')
         torch.save(best_cfg_network, path)
 
-    df.to_csv(os.path.join(NETWORK_RESULT_CSV, 'out.csv'), encoding='utf-8')
+    df.to_csv(os.path.join(NETWORK_RESULT_CSV, filename), encoding='utf-8')
