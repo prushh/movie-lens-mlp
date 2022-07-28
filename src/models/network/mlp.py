@@ -233,8 +233,8 @@ def execute(
 
 
 def mlp(df: pd.DataFrame, easy_params: bool, best_conf: bool):
-    # device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    device = torch.device('cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    #device = torch.device('cpu')
     if device.type == 'cuda':
         print('Using device:', torch.cuda.get_device_name(device))
 
@@ -247,9 +247,9 @@ def mlp(df: pd.DataFrame, easy_params: bool, best_conf: bool):
         dataset.idx_column['runtime'],
         dataset.idx_column['rating_count']
     ]
-    num_workers = 2
+    num_workers = 1
 
-    n_splits = 2
+    n_splits = 5
     cv_outer = StratifiedKFold(n_splits=n_splits, shuffle=True)
     df = pd.DataFrame()
     if best_conf:
