@@ -54,7 +54,7 @@ def show_class_distribution(df: pd.DataFrame):
 
 
 def barplot_multiple_columns(groups: List, elements_group: List, data: List, title: str, yerr=None, filename: str = '',
-                             save: bool = False, label_count: bool = False) -> None:
+                             save: bool = False, label_count: bool = False, upper_title:bool=True) -> None:
     if yerr is None:
         yerr = []
     sns.set_theme(rc=custom_params)
@@ -91,7 +91,11 @@ def barplot_multiple_columns(groups: List, elements_group: List, data: List, tit
     upper_labels = [val.upper() for val in groups]
     ax.set_title(title, fontsize=24)
     ax.set_xticks(loc_ticks)
-    ax.set_xticklabels(upper_labels)
+    if upper_title:
+
+        ax.set_xticklabels(upper_labels)
+    else:
+        ax.set_xticklabels(groups)
 
     if save:
         plt.savefig(filename)
