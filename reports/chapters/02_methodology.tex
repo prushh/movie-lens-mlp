@@ -358,12 +358,6 @@ With regard to the Neural Network, it was necessary to define also the architect
 \end{itemize}
 
 % TODO: momentum, StepLR, WeigthDecay?!
-After optimising the hyperparameters and finding the best configuration, it was decided to study the behaviour of the model when varying the \textit{batch\_size} and the use of \textit{batch\_norm}.
-In particular, the new tested configurations are:
-\begin{itemize}
-    \item \textit{batch\_size}: \{16, 32, 64, 512, 2048, 16384\}
-    \item \textit{batch\_norm}: \{False, True\}
-\end{itemize}
 
 \section{Performance Analysis}
 In the case of study, since the dataset is strongly unbalanced, the validation f1-score is the chosen score with which the ranking of models and hyperparameters combinations is performed.

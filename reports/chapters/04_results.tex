@@ -5,13 +5,13 @@
 \chapter{Results}
 This chapter will discuss the results of the training, validation and testing.
 In the first section the configurations with the best results will be shown with their average scores obtained during training and validation.
-Subsequently, the results obtained from the best configurations will be shown in the Testing section. 
+Subsequently, the results obtained from the best configurations will be shown in the testing section.
+All f1-scores are accompanied by a defined interval thanks to the t-student, with an accuracy of 90\%.
 
 \section{Validation}
 The hyperparameters of the configurations with the best validation results are shown in Tables \ref{table:sklearn_model_best_conf} and \ref{table:torch_model_best_conf}.
 Specifically, the first table shows the scikit-learn models with their hyperparameter values.
 The second table shows the best configuration of the Neural Network showing only the hyperparameters that could vary in their domain.
-Table \ref{table:train_val_results} shows the f1-score obtained by each model during the training and validation phase.
 \begin{table}[!ht]
     \center
     \begin{tabular}{|l|l|}
@@ -45,6 +45,16 @@ Table \ref{table:train_val_results} shows the f1-score obtained by each model du
     \caption{Best configuration for PyTorch model.}
     \label{table:torch_model_best_conf}
 \end{table}
+\newpage
+
+From the best configuration of MovieNet, some observations can be made:
+\begin{itemize}
+    \item In general, the best configurations have a number of hidden layers equal to the smallest value defined in the range.
+    \item The value of weight decay was the smallest in the range, probably because the network was able to generalize the problem without overfitting.
+\end{itemize}
+The scikit-learn models will be commented on directly afterwards, so that the results can be compared.
+The f1 score obtained by each model during the training and validation phase is shown in the Table \ref{table:train_val_results}.
+
 
 \begin{table}[!ht]
     \center
@@ -70,7 +80,16 @@ Table \ref{table:train_val_results} shows the f1-score obtained by each model du
     \caption{Training and validation results of each model with the best configurations.}
     \label{table:train_val_results}
 \end{table}
+
+\begin{figure}[!ht]
+    \center
+    \includegraphics[width=0.8\linewidth]{figures/train_val_plot.png}
+    \caption{Multiplebar plot that shows the train/val f1-score for each model.}
+    \label{fig:train_val_plot}
+\end{figure}
 \newpage
+
+It can be seen that SVM managed to achieve a higher f1 score in both training and validation.
 
 \section{Testing}
 The test phase is necessary to evaluate the performance of the model using samples that have never been taken.
@@ -101,5 +120,16 @@ Instead, probabilistic models are the ones that have obtained worse metrics.
     \label{table:test_results}
 \end{table}
 
+\begin{figure}[!ht]
+    \center
+    \includegraphics[width=0.8\linewidth]{figures/test_metric_plot.png}
+    \caption{Multiplebar plot that shows the test f1-score for each model.}
+    \label{fig:test_metric_plot}
+\end{figure}
+\newpage
+
+The reasons why the test results on the tree-based and naive bayes models are low could be related to the unbalance of the dataset as the test set contains the initial distribution of classes.
+The use of different test sets following cross validation did not affect the performance of the models.
+In fact, the confidence intervals are quite small, which means that the models were able to predict in the same way regardless of the test set.
 
 \end{document}
