@@ -40,7 +40,7 @@ param_layers = {
 param_grid_mlp = {
     'num_epochs': [200],
     'starting_lr': [1e-3],
-    'batch_size': [2 ** i for i in range(3, 15)],
+    'batch_size': [2 ** i for i in range(6, 9)],
     'optim': [torch.optim.Adam],
     'momentum': [0.9],
     'weight_decay': [1e-7]
