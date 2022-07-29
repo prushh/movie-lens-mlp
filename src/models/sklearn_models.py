@@ -6,10 +6,10 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import zero_one_loss, accuracy_score, f1_score
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler, Normalizer
 
 from src.models.config import param_grid_model, best_param_grid_model
@@ -93,12 +93,22 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
             train_data, test_data = data.iloc[train_idx, :], data.iloc[test_idx, :]
             train_target, test_target = target[train_idx], target[test_idx]
 
+            k_neighbors = (np.min(train_target.value_counts()) * 4) / 5
+            k_neighbors_approx = int(np.floor(k_neighbors)) - 1
+
+            steps = [
+                ('over', SMOTE(k_neighbors=k_neighbors_approx)),
+                ('scaling', MinMaxScaler()),
+                ('model', estimator)
+            ]
+
+            pipeline = Pipeline(steps=steps)
+
             cv_inner = StratifiedKFold(n_splits=N_SPLITS, shuffle=True)
 
-            train_data_smt, train_target_smt = balance(train_data, train_target)
-            train_data_proc, test_data_proc = preprocess(train_data_smt, test_data)
+            _, test_data_proc = preprocess(train_data, test_data)
 
-            search = GridSearchCV(estimator=estimator,
+            search = GridSearchCV(estimator=pipeline,
                                   param_grid=param_grid,
                                   scoring='f1_weighted',
                                   cv=cv_inner,
@@ -107,8 +117,10 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
                                   n_jobs=-1,
                                   verbose=3)
 
-            search.fit(train_data_proc, train_target_smt)
+            search.fit(train_data, train_target)
             row_grid_result = pd.DataFrame(search.cv_results_)
+            row_grid_result['fold'] = fold
+            row_grid_result['model'] = model_name
             df_grid_results = pd.concat([df_grid_results, row_grid_result])
             print(
                 f"[train] f1-score={search.cv_results_['mean_train_score'][0]} - [val] f1-score={search.cv_results_['mean_test_score'][0]}")

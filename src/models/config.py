@@ -27,29 +27,29 @@ param_grid_mlp = {
 }
 
 param_grid_svc = {
-    'C': [1, 10, 100],
-    'gamma': [1, 0.1, 0.01],
-    'kernel': ['rbf', 'poly', 'sigmoid']
+    'model__C': [1, 10, 100],
+    'model__gamma': [1, 0.1, 0.01],
+    'model__kernel': ['rbf', 'poly', 'sigmoid']
 }
 
 param_grid_nb = {
-    'var_smoothing': np.logspace(0, -9, num=100)
+    'model__var_smoothing': np.logspace(0, -9, num=100)
 }
 
 param_grid_qda = {
-    'reg_param': [0.00001, 0.0001, 0.001, 0.01, 0.1],
-    'tol': [0.0001, 0.001, 0.01, 0.1],
+    'model__reg_param': [0.00001, 0.0001, 0.001, 0.01, 0.1],
+    'model__tol': [0.0001, 0.001, 0.01, 0.1],
 }
 
 param_grid_tree = {
-    'criterion': ['gini', 'entropy'],
-    'max_depth': np.arange(5, 20, 5)
+    'model__criterion': ['gini', 'entropy'],
+    'model__max_depth': np.arange(5, 20, 5)
 }
 
 param_grid_forest = {
-    'n_estimators': np.arange(100, 1000, 200),
-    'max_features': ['sqrt', 'log2'],
-    'max_depth': [4]
+    'model__n_estimators': np.arange(700, 1200, 200),
+    'model__max_features': ['sqrt', 'log2'],
+    'model__max_depth': [4, 10]
 }
 
 param_grid_model = {
@@ -69,15 +69,16 @@ param_grid_model = {
 best_param_grid_model = {
     'tree_based': [
         ('random_forest_classifier', RandomForestClassifier(),
-         {'n_estimators': [700], 'max_features': ['sqrt'], 'max_depth': [4]}),
-        ('decision_tree_classifier', DecisionTreeClassifier(), {'criterion': ['entropy'], 'max_depth': [15]})
+         {'model__n_estimators': [700], 'model__max_features': ['sqrt'], 'model__max_depth': [4]}),
+        ('decision_tree_classifier', DecisionTreeClassifier(),
+         {'model__criterion': ['entropy'], 'model__max_depth': [15]})
     ],
     'svm': [
-        ('svc', SVC(), {'C': [100], 'gamma': [0.01], 'kernel': ['rbf']})
+        ('svc', SVC(), {'model__C': [100], 'model__gamma': [0.01], 'model__kernel': ['rbf']})
     ],
     'naive_bayes': [
-        ('gaussian_nb', GaussianNB(), {'var_smoothing': [8.111308307896872e-07]}),
-        ('qda', QuadraticDiscriminantAnalysis(), {'reg_param': [0.001], 'tol': [0.0001]})
+        ('gaussian_nb', GaussianNB(), {'model__var_smoothing': [8.111308307896872e-07]}),
+        ('qda', QuadraticDiscriminantAnalysis(), {'model__reg_param': [0.001], 'model__tol': [0.0001]})
     ]
 }
 
@@ -98,23 +99,4 @@ best_param_grid_mlp = {
     'optim': [torch.optim.Adam],
     'momentum': [0.9],
     'weight_decay': [1e-7]
-}
-
-param_layers_batch = {
-    'input_act': [nn.LeakyReLU()],
-    'hidden_act': [nn.LeakyReLU()],
-    'hidden_size': [512],
-    'num_hidden_layers': [3],
-    'dropout': [0.2],
-    'batch_norm': [True],
-    'output_fn': [None]
-}
-
-param_grid_mlp_batch = {
-    'num_epochs': [200],
-    'starting_lr': [1e-3],
-    'batch_size': [2 ** i for i in range(6, 9)],#3,15
-    'optim': [torch.optim.Adam],
-    'momentum': [0.9],
-    'weight_decay': [1e-5]
 }
