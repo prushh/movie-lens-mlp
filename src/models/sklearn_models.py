@@ -14,7 +14,7 @@ from sklearn.preprocessing import MinMaxScaler, Normalizer
 
 from src.models.config import param_grid_model, best_param_grid_model
 from src.utils.const import NUM_BINS, MODEL_RESULTS_CSV, MODEL_RESULTS_DIR
-from src.utils.util_models import add_row_to_df_sk
+from src.utils.util_models import add_row_to_df_sk, make_pipeline_sk
 
 
 def balance(train_data: pd.DataFrame, train_target: pd.Series) -> Tuple:
@@ -96,17 +96,12 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
             k_neighbors = (np.min(train_target.value_counts()) * 4) / 5
             k_neighbors_approx = int(np.floor(k_neighbors)) - 1
 
-            steps = [
-                ('over', SMOTE(k_neighbors=k_neighbors_approx)),
-                ('scaling', MinMaxScaler()),
-                ('model', estimator)
-            ]
-
-            pipeline = Pipeline(steps=steps)
+            pipeline = make_pipeline_sk(estimator, k_neighbors_approx)
 
             cv_inner = StratifiedKFold(n_splits=N_SPLITS, shuffle=True)
 
             _, test_data_proc = preprocess(train_data, test_data)
+            train_data_np = train_data.to_numpy()
 
             search = GridSearchCV(estimator=pipeline,
                                   param_grid=param_grid,
@@ -117,7 +112,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
                                   n_jobs=-1,
                                   verbose=3)
 
-            search.fit(train_data, train_target)
+            search.fit(train_data_np, train_target)
             row_grid_result = pd.DataFrame(search.cv_results_)
             row_grid_result['fold'] = fold
             row_grid_result['model'] = model_name
@@ -151,7 +146,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
             f'[{model_name}] [mean_test] Mean accuracy: {np.mean(outer_results):3f} - Mean f1-score: {np.mean(outer_f1_results):3f}')
 
 
-def test_eval(fold: int, model_name: str, test_data: pd.DataFrame, test_target: pd.DataFrame,
+def test_eval(fold: int, model_name: str, test_data: np.ndarray, test_target: pd.DataFrame,
               notebook: bool = False) -> Tuple:
     filename = f'{fold}_{model_name}.pkl'
     if notebook:
