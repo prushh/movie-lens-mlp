@@ -69,16 +69,16 @@ param_grid_model = {
 best_param_grid_model = {
     'tree_based': [
         ('random_forest_classifier', RandomForestClassifier(),
-         {'model__n_estimators': [700], 'model__max_features': ['sqrt'], 'model__max_depth': [4]}),
+         {'model__n_estimators': [700], 'model__max_features': ['sqrt'], 'model__max_depth': [10]}),
         ('decision_tree_classifier', DecisionTreeClassifier(),
-         {'model__criterion': ['entropy'], 'model__max_depth': [15]})
+         {'model__criterion': ['gini'], 'model__max_depth': [10]})
     ],
     'svm': [
         ('svc', SVC(), {'model__C': [100], 'model__gamma': [0.01], 'model__kernel': ['rbf']})
     ],
     'naive_bayes': [
-        ('gaussian_nb', GaussianNB(), {'model__var_smoothing': [8.111308307896872e-07]}),
-        ('qda', QuadraticDiscriminantAnalysis(), {'model__reg_param': [0.001], 'model__tol': [0.0001]})
+        ('gaussian_nb', GaussianNB(), {'model__var_smoothing': [0.0004328761281083057]}),
+        ('qda', QuadraticDiscriminantAnalysis(), {'model__reg_param': [0.001], 'model__tol': [0.001]})
     ]
 }
 

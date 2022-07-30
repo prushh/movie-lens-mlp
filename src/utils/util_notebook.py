@@ -55,7 +55,8 @@ def get_best_configuration_mlp(cfg: int, p_layer, p_grid_mlp) -> Tuple:
     return list(hyper_parameters_model_all)[cfg]
 
 
-def summary_statistics_model(df_score: pd.DataFrame, dict_: Dict, model: str, train: bool = False) -> pd.DataFrame:
+def summary_statistics_model(df_score: pd.DataFrame, dict_: Dict, model: str, train: bool = False,
+                             scikit: bool = False) -> pd.DataFrame:
     """
     Well formatted print with metrics, configurations, etc. about the specified model.
     Create a sample with the printed metrics and concat it to the df_score input DataFrame
@@ -63,6 +64,7 @@ def summary_statistics_model(df_score: pd.DataFrame, dict_: Dict, model: str, tr
     :param dict_: the Dict with the metrics to be printed
     :param model: the model name
     :param train: the flag that specifies which metric are used
+    :param scikit: the flag to specify model types
     :return: the updated DataFrame with the new sample
     """
     if not train:
@@ -93,56 +95,80 @@ def summary_statistics_model(df_score: pd.DataFrame, dict_: Dict, model: str, tr
         })
         df_score = pd.concat([df_score, new_test_score], ignore_index=True)
     else:
-        print(
-            f"Best configuration {model} mean metrics:\n"
-            f"train f1: {dict_['train_score']['mu']} ±{dict_['train_score']['t_student']}\n"
-            f"validation f1: {dict_['val_score']['mu']} ±{dict_['val_score']['t_student']}\n"
-        )
-        new_test_score = pd.DataFrame({
-            'model': [model],
-            'train_score': [dict_['train_score']['mu']],
-            'val_score': [dict_['val_score']['mu']],
-            'train_ci': [dict_['train_score']['t_student']],
-            'val_ci': [dict_['val_score']['t_student']]
-        })
+        if scikit:
+            print(
+                f"Best configuration {model} mean metrics:\n"
+                f"train f1: {dict_['mean_f1_train']['mu']} ±{dict_['mean_f1_train']['t_student']}\n"
+                f"validation f1: {dict_['mean_f1_val']['mu']} ±{dict_['mean_f1_val']['t_student']}\n"
+            )
+            new_test_score = pd.DataFrame({
+                'model': [model],
+                'train_score': [dict_['mean_f1_train']['mu']],
+                'val_score': [dict_['mean_f1_val']['mu']],
+                'train_ci': [dict_['mean_f1_train']['t_student']],
+                'val_ci': [dict_['mean_f1_val']['t_student']]
+            })
+        else:
+            print(
+                f"Best configuration {model} mean metrics:\n"
+                f"train f1: {dict_['train_score']['mu']} ±{dict_['train_score']['t_student']}\n"
+                f"validation f1: {dict_['val_score']['mu']} ±{dict_['val_score']['t_student']}\n"
+            )
+            new_test_score = pd.DataFrame({
+                'model': [model],
+                'train_score': [dict_['train_score']['mu']],
+                'val_score': [dict_['val_score']['mu']],
+                'train_ci': [dict_['train_score']['t_student']],
+                'val_ci': [dict_['val_score']['t_student']]
+            })
         df_score = pd.concat([df_score, new_test_score], ignore_index=True)
     return df_score
 
 
-def find_max_f1_cfg(df: pd.DataFrame) -> np.ndarray:
+def find_max_f1_cfg(df: pd.DataFrame, scikit: bool = False) -> np.ndarray:
     """
     Find the best configuration based on mean val f1-score
     :param df: the DataFrame that contains model outputs
+    :param scikit: the flag to specify model types
     :return: ndarray with the best configuration indices
     """
+    col_names = ('mean_test_score', 'params') if scikit else ('mean_f1_val', 'cfg')
+
     cfg = []
     for fold in df['fold'].unique():
-        idx = df[df['fold'] == fold]['mean_f1_val'].idxmax()
-        cfg.append(df.iloc[idx]['cfg'])
+        idx = df[df['fold'] == fold][col_names[0]].idxmax()
+        cfg.append(df.iloc[idx][col_names[1]])
     cfgs = np.unique(np.array(cfg))
     return cfgs
 
 
-def find_best_conf(lst_conf, df: pd.DataFrame) -> Dict:
+def find_best_conf(lst_conf, df: pd.DataFrame, scikit: bool = False) -> Dict:
     """
     Create Dict with statistics for all metrics, based on the different configurations inside lst_conf
     :param lst_conf: the list that contains the configuration indexes
     :param df: the DataFrame that contains the metrics
+    :param scikit: the flag to specify model types
     :return: Dict with the best statistics based on mean val
     """
     conf = []
     for idx, cfg in enumerate(lst_conf):
-        conf.append(
-            {
+        if scikit:
+            one_sample = {
+                'mean_f1_val': mu_confidence_interval(df[df['params'] == cfg]['mean_test_score']),
+                'mean_f1_train': mu_confidence_interval(df[df['params'] == cfg]['mean_train_score'])
+            }
+        else:
+            one_sample = {
                 'f1': mu_confidence_interval(df[df['cfg'] == cfg]['f1_test']),
                 'loss': mu_confidence_interval(df[df['cfg'] == cfg]['loss_test']),
                 'acc': mu_confidence_interval(df[df['cfg'] == cfg]['acc_test']),
                 'mean_f1_val': mu_confidence_interval(df[df['cfg'] == cfg]['mean_f1_val'])
             }
-        )
+        conf.append(one_sample)
         conf[idx]['conf'] = cfg
-        conf[idx]['acc']['mu'] /= 100
-        conf[idx]['acc']['t_student'] /= 100
+        if not scikit:
+            conf[idx]['acc']['mu'] /= 100
+            conf[idx]['acc']['t_student'] /= 100
     max_val = conf[0]
     for elm in conf:
         if max_val['mean_f1_val']['mu'] < elm['mean_f1_val']['mu'] and max_val['mean_f1_val']['t_student'] > \
