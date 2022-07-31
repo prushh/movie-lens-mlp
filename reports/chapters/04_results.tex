@@ -10,22 +10,21 @@ All f1-scores are accompanied by a defined interval thanks to the t-student, wit
 
 \section{Validation}
 The hyperparameters of the configurations with the best validation results are shown in Tables \ref{table:sklearn_model_best_conf} and \ref{table:torch_model_best_conf}.
-Specifically, the first table shows the scikit-learn models with their hyperparameter values.
-The second table shows the best configuration of the Neural Network showing only the hyperparameters that could vary in their domain.
+In particular, the hyper parameters that led the models to achieve the best results are shown.
 \begin{table}[!ht]
     \center
     \begin{tabular}{|l|l|}
         \hline
         \multicolumn{1}{|c|}{\textbf{Model}} & \multicolumn{1}{c|}{\textbf{Best configuration}}                                                    \\
         \hline
-        \textit{RandomForestClassifier}    & \begin{tabular}[c]{@{}l@{}}n\_estimators: 700\\ max\_features: 'sqrt'\\ max\_depth: 4\end{tabular} \\
+        \textit{RandomForestClassifier}    & \begin{tabular}[c]{@{}l@{}}n\_estimators: 700\\ max\_features: 'sqrt'\\ max\_depth: 10\end{tabular} \\
         \hline
-        \textit{DecisionTreeClassifier}    & \begin{tabular}[c]{@{}l@{}}criterion: 'entropy'\\ max\_depth: 15\end{tabular}                      \\
+        \textit{DecisionTreeClassifier}    & \begin{tabular}[c]{@{}l@{}}criterion: 'gini'\\ max\_depth: 10\end{tabular}                      \\
         \hline
-        \textit{GaussianNB}                & var\_smoothing: 8.111308307896872e-07                                                              \\
+        \textit{GaussianNB}                & var\_smoothing: 1.873817422860383e-06                                                              \\
         \hline
         \textit{QDA}                       & \begin{tabular}[c]{@{}l@{}}reg\_param: 1e-3\\ tol: 1e-4\end{tabular}                            \\
-        \hline
+        \hline % TODO: wait result
         \textit{SVM}                       & \begin{tabular}[c]{@{}l@{}}C: 100\\ gamma: 1e-2\\ kernel: 'rbf'\end{tabular}                       \\
         \hline
     \end{tabular}
@@ -53,7 +52,7 @@ From the best configuration of MovieNet, some observations can be made:
     \item The value of weight decay was the smallest in the range, probably because the network was able to generalize the problem without overfitting.
 \end{itemize}
 The scikit-learn models will be commented on directly afterwards, so that the results can be compared.
-The f1 score obtained by each model during the training and validation phase is shown in the Table \ref{table:train_val_results}.
+The f1-score obtained by each model during the training and validation phase is shown in the Table \ref{table:train_val_results}.
 
 
 \begin{table}[!ht]
@@ -64,14 +63,14 @@ The f1 score obtained by each model during the training and validation phase is 
         \cline{2-3} 
         \multicolumn{1}{|c|}{}                                & \multicolumn{2}{c|}{\textbf{f1-score (\%)}}                                       \\
         \hline
-        \textit{RandomForestClassifier}                       & \multicolumn{1}{c|}{78.9 $\pm$0.2}         & 78.1 $\pm$0.2                                \\
+        \textit{RandomForestClassifier}                       & \multicolumn{1}{c|}{96.3 $\pm$0.1}         & 75.5 $\pm$0.1                               \\
         \hline
-        \textit{DecisionTreeClassifier}                       & \multicolumn{1}{c|}{99.8 $\pm$0.01}        & 86.6 $\pm$0.1                                \\
+        \textit{DecisionTreeClassifier}                       & \multicolumn{1}{c|}{79.4 $\pm$0.4}        & 66 $\pm$0.8                                \\
         \hline
-        \textit{GaussianNB}                                   & \multicolumn{1}{c|}{72.1 $\pm$0.3}         & 70.7 $\pm$0.3                                \\
+        \textit{GaussianNB}                                   & \multicolumn{1}{c|}{51 $\pm$0.3}         & 45 $\pm$0.2                                \\
         \hline
-        \textit{QDA}                                          & \multicolumn{1}{c|}{98.7 $\pm$0.03}        & 89.8 $\pm$0.07                               \\
-        \hline
+        \textit{QDA}                                          & \multicolumn{1}{c|}{97 $\pm$0.06}        & 49.6 $\pm$0.3                               \\
+        \hline %TODO: wait result
         \textit{SVM}                                          & \multicolumn{1}{c|}{99.9 $\pm$0.001}       & 96.1 $\pm$0.09                               \\
         \hline
         \textit{MovieNet (MLP)}                               & \multicolumn{1}{c|}{87.5 $\pm$0.1}         & 79.5 $\pm$0.08                               \\
@@ -104,14 +103,14 @@ Instead, probabilistic models are the ones that have obtained worse metrics.
         \cline{2-3} 
         \multicolumn{1}{|c|}{}                                & \multicolumn{1}{c|}{\textbf{f1-score (\%)}} & \textbf{loss}  \\ 
         \hline
-        \textit{RandomForestClassifier}                       & \multicolumn{1}{c|}{60.9 $\pm$0.06}             & 0.392 \\
+        \textit{RandomForestClassifier}                       & \multicolumn{1}{c|}{75.7 $\pm$0.5}             & 0.242 \\
         \hline
-        \textit{DecisionTreeClassifier}                       & \multicolumn{1}{c|}{64 $\pm$0.4}                & 0.36  \\
+        \textit{DecisionTreeClassifier}                       & \multicolumn{1}{c|}{65.3 $\pm$0.9}                & 0.348  \\
         \hline
-        \textit{GaussianNB}                                   & \multicolumn{1}{c|}{45.2 $\pm$1}                & 0.548 \\
+        \textit{GaussianNB}                                   & \multicolumn{1}{c|}{7.4 $\pm$0.5}                & 0.837 \\
         \hline
-        \textit{QDA}                                          & \multicolumn{1}{c|}{52.1 $\pm$0.7}              & 0.464 \\
-        \hline
+        \textit{QDA}                                          & \multicolumn{1}{c|}{14.3 $\pm$0.004}              & 0.693 \\
+        \hline % TODO: wait result
         \textit{SVM}                                          & \multicolumn{1}{c|}{82.8 $\pm$0.4}              & 0.17  \\
         \hline
         \textit{MovieNet (MLP)}                                     & \multicolumn{1}{c|}{85.9 $\pm$0.3}              & 0.36  \\ \hline

@@ -4,44 +4,44 @@
 
 \chapter{Implementation}
 The implementation phase includes the use of some library that has been seen during the lectures.
-In particular, the libraries related to data analytics were pandas, numpy, imbalance-learn, scikit-learn and torch.
-In order to do the data visualization stage matplotlib and seaborn were used.
-It was necessary to install the CUDA platform to take full advantage of the GPU, which is only supported by the neural network.
-The structure of the project tries to follow the \href{https://cookiecutter.readthedocs.io/en/stable/}{cookiecutter template} and is therefore defined as below:
+In particular, the libraries related to data analytics were pandas \cite{reback2020pandas}, numpy \cite{harris2020array}, imbalance-learn, scikit-learn and torch.
+In order to do the data visualization stage matplotlib \cite{Hunter:2007} and seaborn \cite{Waskom2021} were used.
+It was necessary to install the CUDA platform \cite{cuda} to take full advantage of the GPU, which is only supported by the neural network.
+%The structure of the project tries to follow the cookiecutter template \cite{site:cookiecutter} and is therefore defined as below:
 \begin{itemize}
     \item \textit{data}, is created during the first execution, contains the data processed and to be processed
     \item \textit{noteboooks}, contains notebooks explaining the implementation of certain project parts
-    \item \textit{reports}, contains LaTeX source files and figures
+    \item \textit{reports}, contains LaTeX source files and figures of this report
     \item \textit{src}, contains project python files
     \item \textit{.env}, useful to specify env variables
     \item \textit{main.py}, entry point for the project, contains the definition of argparse to specify which phase to execute
     \item \textit{requirements.txt}, specify the libraries that the project requires
 \end{itemize}
 Since the notebooks were written to show and explain different parts of the code, each of them will be introduced with the relative choices made to perform that operation.
-The first item of each sub-entry has a link to GitHub resource.
+Each entry indicating the name of a notebook has a link to the respective GitHub resource.
 
 \section{Preprocessing}
 It was decided to download the datasets at runtime if they were not present within the data folder, so as not to neglect the acquisition and preprocessing phase within the pipeline.
 To reduce the memory size of each dataset, the correct type had to be specified for each feature.
-In addition, these datasets were saved in .parquet format to optimise the performance of operations.
-To increase the readability of the code, Method Chaining was used for each DataFrame.
+In addition, these datasets were saved in .parquet format to optimize the performance of operations.
+To increase the readability of the code, \href{https://tomaugspurger.github.io/method-chaining.html}{Method Chaining} was used for each DataFrame.
 
 \begin{itemize}
-    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/1.0-raw-data-exploration.ipynb}{\textit{1.0-raw-data-exploration}}
-    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/1.1-external-data-exploration.ipynb}{\textit{1.1-external-data-exploration}}
-    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/1.2-add-genome-data.ipynb}{\textit{1.2-add-genome-data}}
-    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/1.3-processed-data-storage.ipynb}{\textit{1.3-processed-data-storage}}
-    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/1.4-data-transformation-evaluation.ipynb}{\textit{1.4-data-transformation-evaluation}}
-    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/1.5-imbalance-evaluation.ipynb}{\textit{1.5-imbalance-evaluation}}
+    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/1.0-raw-data-exploration.ipynb}{\textit{1.0-raw-data-exploration.ipynb}}
+    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/1.1-external-data-exploration.ipynb}{\textit{1.1-external-data-exploration.ipynb}}
+    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/1.2-add-genome-data.ipynb}{\textit{1.2-add-genome-data.ipynb}}
+    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/1.3-processed-data-storage.ipynb}{\textit{1.3-processed-data-storage.ipynb}}
+    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/1.4-data-transformation-evaluation.ipynb}{\textit{1.4-data-transformation-evaluation.ipynb}}
+    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/1.5-imbalance-evaluation.ipynb}{\textit{1.5-imbalance-evaluation.ipynb}}
 \end{itemize}
 
 \section{Modeling}
 All sklearn models can use the processed dataset directly, unlike mlp, which must use an appropriate class to represent the dataset.
-The training phase includes the hyperparameters optimization, computed in a differet way beetwen both typology model.
+The training phase includes the hyperparameters optimization, computed differently for both model types.
 For the sklearn models, GridSearchCV was used, which allows cross-validation and simple selection of the best model.
 Since the PyTorch model doesn't support that class, it was needed to use itertools.
 It provides only a cartesian product of all configuration values and so it was necessary to define by hand cross validation and other flow controls.
-It is also possible to choose in which mode to execute the project, following this argparse definition:
+Since training a model with cross validation is time-consuming, it is given the possibility of specifying parameters via argparse as showed below, for a one-configuration run:
 \begin{center}
     \texttt{main.py model [--easy | --best]}
 \end{center}
@@ -49,18 +49,15 @@ It is also possible to choose in which mode to execute the project, following th
 The next two notebooks show a demo for each of the models used.
 Unlike the implementation in the project files, these do not save output metrics, but merely display them.
 \begin{itemize}
-    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/2.0-sklearn-models.ipynb}{\textit{2.0-sklearn-models}}
-    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/2.1-mlp-model.ipynb}{\textit{2.1-mlp-model}}
+    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/2.0-sklearn-models.ipynb}{\textit{2.0-sklearn-models.ipynb}}
+    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/2.1-mlp-model.ipynb}{\textit{2.1-mlp-model.ipynb}}
 \end{itemize}
-It is therefore necessary to explain how the saving of output metrics is handled.
-Saving output metrics involves storing the train, validation and test scores within a DataFrame where the configuration and fold to which they belong is specified.
-
 
 \section{Performance analysis}
 The following notebook aims to read and analyse all the csv files containing the output metrics of the various models.
 In particular, useful functions are implemented to find a specific configuration, find the configuration with the best f1-score and print a summary with the metrics of the best configurations.
 \begin{itemize}
-    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/3.0-performance-analysis.ipynb}{\textit{3.0-performance-analysis}}
+    \item \href{https://github.com/prushh/movie-lens-mlp/blob/main/notebooks/3.0-performance-analysis.ipynb}{\textit{3.0-performance-analysis.ipynb}}
 \end{itemize}
 
 \end{document}
