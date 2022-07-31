@@ -35,10 +35,10 @@ More informations about the nature of the data are available \href{https://files
 
 
 Most of these datasets provides information for approximately 60000 films.
-The links dataset provides two identifiers that allow to collect information from the IMDB and TMDB databases.
+The links dataset provides two identifiers that allow to collect information from the IMDb and TMDB databases.
 Thanks to the links' features, it has been possible to collect some more information on the running times of the films that could provide more insight into them.
 Talking about the ground truth of the supervisioned models, the rating mean is missing. So the target feature will be computed during the pre-process phase thanks to the ratings dataset.
-Further information about the features usage and the cardinality of the datasets will be discussed in the Pre-Process section.
+Further information about the features usage and the cardinality of the datasets will be discussed in the following section.
 
 
 \section{Data Pre-process}
@@ -70,7 +70,7 @@ At the end of this initial phase, the first sample of the movies dataset appears
 
 In order to finish the data pre-process on this dataset, the data cleaning is required.
 First of all, there are some films where the year of the film production is missing.
-Analyzing the distribuition of these, as showed in Figure \ref{fig:year_distribution_missing}, it is possible to see that the distribuition is right skewed, so the missing values can be filled with the \textbf{median}, as suggested during the lectures.
+Analyzing the distribuition of these, as showed in Figure \ref{fig:year_distribution_missing}, it is possible to see that the distribuition is right skewed, so the missing values can be filled with the median, as suggested during the lectures.
 \begin{figure}[h]
     \includegraphics[width=\linewidth]{figures/year_distribution_missing.png}
     \caption{Right skewed probability distribution of the year feature.}
@@ -133,18 +133,12 @@ Cardinality: $58098 \times 3$
 
 On this dataset no pre-processing was needed because for each movie it contains two identifier that provide a link to external sources.
 The interesting one is tmdbId because it has been used to retrieve information from the TMDB database.
-Using the TMDB Api it has been possibile to build a new dataset that contains some additional features:
-\begin{itemize}
-    \item budget
-    \item revenue
-    \item adult
-    \item runtime
-\end{itemize}
+Using the TMDB Api it has been possibile to build a new dataset that contains some additional features: budget, revenue, adult and runtime.
 In order to avoid the expensive operation of the Api calls, the resulted dataset has been saved in a GitHub \href{https://github.com/prushh/movie-lens-mlp/releases/tag/api-dataset}{release}.
 Due to the insufficient amount of valid samples, the IMDb \href{https://datasets.imdbws.com/title.basics.tsv.gz}{title-basics.csv} dataset was downloaded to try to fill in all missing values.
 After a brief exploration and analysis it has been possible to see that only the runtime feature has an enough amount of samples.
 Since there continue to be some missing values, the distribution of this feature was analyzed in Figure \ref{fig:runtime_distribution_missing}.
-It is possible to see that the distribuition is left skewed, so the missing values can be filled with the \textbf{median}.
+It is possible to see that the distribuition is left skewed, so the missing values can be filled with the median.
 
 \begin{figure}[h]
     \center
@@ -158,7 +152,7 @@ The final cardinality of the acquired external resources is $58098 \times 2$.
 \subsection*{Final - final.parquet}
 In this section it will be showed how the cardinality of the used dataset has been obtained, starting from all the previously processed datasets.
 In particular, the focus will be on the number of samples, because the number of columns will increase by the addition of the features coming from all the other datasets.
-Since for a classification task is interesting to know the information about a sample, the starting dataset will be the movies and then all the others will be merged, trying to preserve the maximum number of samples.
+Since for a classification task is interesting to know the informations about a sample, the starting dataset will be the movies and then all the others will be merged, trying to preserve the maximum number of samples.
 The first merge has been between movies and ratings because if a film doesn’t have the target feature there is no point to consider it.
 In addition, all films with no rating mean were discarded, resulting in a cardinality of $50157 \times 24$.
 From this point on, all the merges will be performed using the previously calculated dataset, so only the new dataset will be specified.
@@ -166,8 +160,7 @@ The second merge considers tags dataset, where there was an important number of 
 In this case, these samples were not discarded because they were considered as a film that generated no users interaction, so all missing values were filled with 0, resulting in a cardinality of $50157 \times 25$.
 The third merge introduces external resources where for each film there is a related sample, so the cardinality depends from the previous one, resulting $50157 \times 26$.
 The final merge introduces the genome dataset, where there is a large gap between the cardinality of this dataset and the previous one.
-The choice for this merge was to discard all data
-that don't match with the genome dataset because it provides more interesting characteristics than the other datasets could provide.
+The choice for this merge was to discard all data that don't match with the genome dataset because it provides more interesting characteristics than the other datasets could provide.
 At the end, the cardinality of the final dataset is $13147 \times 1154$.
 
 \subsection*{Data Transformation}
@@ -175,6 +168,7 @@ After further exploration, it becomes apparent that some features did not belong
 For this reason, it was useful to apply certain transformation techniques such as min-max scaling and normalization.
 In order to apply some of these transformations, taking into account also the balancing task, the split of the dataset is needed because all these operations entail working on the training set.
 So, in this section, the dataset will be split with the ratios shown in Table \ref{table:dataset_split}.
+% TODO: change size value!
 \begin{table}[h]
     \center
     \begin{tabular}{|c|c|c|}
@@ -223,7 +217,7 @@ It has been seen as the distribuition of these features are not Gaussian and for
         \subcaption{Year}
     \end{minipage}    
     \label{fig:distribuition_features}
-    \caption{Comparision of feature distribuition.}
+    \caption{Comparision of feature distribuitions.}
 \end{figure}
 
 In order to have a greater reliability on the techniques to apply, a test function was created.
@@ -289,7 +283,6 @@ Due to the different behaviour of the neural network, it was decided to use one 
 \begin{itemize}
     \item \textit{WeightedRandomSampler}, gives a weight to each sample considering the frequency of the class it belongs to
 \end{itemize}
-\newpage
 
 \section{Modeling}
 In order to train the proposed models with enhanced reliability the internal-external cross-validation is used.
@@ -304,7 +297,7 @@ The models specified in the assignments were used with the following hyperparame
     \end{itemize}
     \item RandomForest
     \begin{itemize}
-        \item \textit{n\_estimator}, the number of trees in the forest: \{100, 300, 500, 700, 900\}
+        \item \textit{n\_estimator}, the number of trees in the forest: \{700, 900, 1100\}
         \item \textit{max\_features}, the number of features to consider when looking for the best split: \{sqrt, log2\}
     \end{itemize} 
 \end{itemize}
@@ -314,7 +307,6 @@ The models specified in the assignments were used with the following hyperparame
     \begin{itemize}
         \item \textit{var\_smoothing}: logspace(0, -9, num=100)
     \end{itemize}
-    % TODO: check collinearity
     \item Quadratic Discriminant Analysis (QDA)
     \begin{itemize}
         \item \textit{reg\_param}: $\{x = 10^z, z \in \mathbb{Z}|-5 \leq z \leq -1\}$
@@ -330,7 +322,7 @@ The models specified in the assignments were used with the following hyperparame
         \item \textit{gamma}: $\{x = 10^z, z \in \mathbb{Z}|-2 \leq z \leq -1\}$
     \end{itemize}
 \end{itemize}
-% TODO: Early Stopping
+\newpage
 The previously defined hyperparameters were chosen from the documentation of the various models.
 In particular, for categorical parameters, a sub-set of those proposed in the model documentation was chosen, while for numerical parameters, a range was created from the default value.
 \begin{itemize}
@@ -357,11 +349,11 @@ With regard to the Neural Network, it was necessary to define also the architect
     \item \textit{output\_fn}: not used because CrossEntropy includes the SoftMax
 \end{itemize}
 
-% TODO: momentum, StepLR, WeigthDecay?!
-
 \section{Performance Analysis}
 In the case of study, since the dataset is strongly unbalanced, the validation f1-score is the chosen score with which the ranking of models and hyperparameters combinations is performed.
 At the end of each training fold on a specific configuration, the measured values are \textit{loss}, \textit{accuracy} and \textit{f1-score}.
 Saving these values for each fold, the mean and the confidence interval could be calculated for the chosen metric.
+
+\cleardoublepage
 
 \end{document}
