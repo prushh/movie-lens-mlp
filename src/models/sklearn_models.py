@@ -132,7 +132,12 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
                 os.mkdir(MODEL_RESULTS_DIR)
             if not os.path.exists(MODEL_RESULTS_CSV):
                 os.mkdir(MODEL_RESULTS_CSV)
-            out_filename = f'best_out_{model_group}.csv' if best_conf else f'out_{model_group}.csv'
+            if easy_params:
+                out_filename = f'best_out_{model_group}.csv'
+            elif best_conf:
+                out_filename = f'best_out_{model_group}.csv'
+            else:
+                out_filename = f'out_{model_group}.csv'
             df_results.to_csv(os.path.join(MODEL_RESULTS_CSV, out_filename), encoding='utf-8')
             df_grid_results.to_csv(os.path.join(MODEL_RESULTS_CSV, f'out_grid_{model_group}.csv'), encoding='utf-8')
 
