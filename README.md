@@ -11,7 +11,7 @@ Project for the course "Data Analytics" of the University of Bologna, A.Y. 2021/
 
 To execute the script, [Python](https://www.python.org/) must be installed, and some external libraries must be downloaded and installed using the pip (or pip3) package manager:
 
-```console
+```bash
 pip install -r requirements.txt
 ```
 
