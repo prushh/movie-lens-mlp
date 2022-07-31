@@ -19,7 +19,7 @@ We recommend the use of a virtual environment such as [conda](https://www.anacon
 
 ## Usage
 
-```console
+```bash
 python main.py -h
 
 usage: main.py model [--easy | --best]
