@@ -77,8 +77,8 @@ best_param_grid_model = {
         ('svc', SVC(), {'model__C': [100], 'model__gamma': [0.01], 'model__kernel': ['rbf']})
     ],
     'naive_bayes': [
-        ('gaussian_nb', GaussianNB(), {'model__var_smoothing': [0.0004328761281083057]}),
-        ('qda', QuadraticDiscriminantAnalysis(), {'model__reg_param': [0.001], 'model__tol': [0.001]})
+        ('gaussian_nb', GaussianNB(), {'model__var_smoothing': [1.873817422860383e-06]}),
+        ('qda', QuadraticDiscriminantAnalysis(), {'model__reg_param': [0.001], 'model__tol': [0.0001]})
     ]
 }
 
