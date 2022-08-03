@@ -4,10 +4,6 @@ from typing import List
 import numpy as np
 import pandas as pd
 import torch
-from imblearn.over_sampling import SMOTE
-from imblearn.pipeline import Pipeline
-from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import MinMaxScaler
 from torch import utils
 
 
@@ -84,34 +80,3 @@ def add_row_to_df_sk(model_name: int, fold: int, df: pd.DataFrame, loss_test: fl
 
     df = pd.concat([df, pd.DataFrame(data=row_stat)], ignore_index=True)
     return df
-
-
-def make_pipeline_sk(estimator, k_neighbors: int) -> Pipeline:
-    # features = [
-    #     'year',
-    #     'title_length',
-    #     'runtime',
-    #     'rating_count',
-    #     'tag_count'
-    # ]
-    features = [
-        0,
-        1,
-        21,
-        22,
-        23
-    ]
-
-    scaler = ColumnTransformer(
-        remainder='passthrough',
-        transformers=[
-            ('minmax', MinMaxScaler(), features)
-        ])
-
-    steps = [
-        ('over', SMOTE(k_neighbors=k_neighbors)),
-        ('scaling', scaler),
-        ('model', estimator)
-    ]
-
-    return Pipeline(steps=steps)

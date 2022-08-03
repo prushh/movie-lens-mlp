@@ -14,25 +14,17 @@ from sklearn.preprocessing import MinMaxScaler, Normalizer
 
 from src.models.config import param_grid_model, best_param_grid_model
 from src.utils.const import NUM_BINS, MODEL_RESULTS_CSV, MODEL_RESULTS_DIR
-from src.utils.util_models import add_row_to_df_sk, make_pipeline_sk
+from src.utils.util_models import add_row_to_df_sk
 
 
-def balance(train_data: pd.DataFrame, train_target: pd.Series) -> Tuple:
-    k_neighbors = np.min(train_target.value_counts()) - 1
+def make_pipeline_sk(estimator, k_neighbors: int) -> Pipeline:
 
-    smt = SMOTE(k_neighbors=k_neighbors)
-    train_data_smt, train_target_smt = smt.fit_resample(train_data, train_target)
-
-    return train_data_smt, train_target_smt
-
-
-def preprocess(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Tuple:
     features = [
-        'year',
-        'title_length',
-        'runtime',
-        'rating_count',
-        'tag_count'
+        0,  # year
+        1,  # title_length
+        21,  # runtime
+        22,  # rating_count
+        23  # tag_count
     ]
 
     scaler = ColumnTransformer(
@@ -41,18 +33,13 @@ def preprocess(train_data: pd.DataFrame, test_data: pd.DataFrame) -> Tuple:
             ('minmax', MinMaxScaler(), features)
         ])
 
-    norm = Normalizer(norm='l2')
+    steps = [
+        ('over', SMOTE(k_neighbors=k_neighbors)),
+        ('scaling', scaler),
+        ('model', estimator)
+    ]
 
-    pipe = Pipeline(steps=[
-        ('scaler', scaler),
-        # ('norm', norm)
-    ])
-
-    pipe.fit(train_data)
-    train_data_proc = pipe.transform(train_data)
-    test_data_proc = pipe.transform(test_data)
-
-    return train_data_proc, test_data_proc
+    return Pipeline(steps=steps)
 
 
 def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: bool):
@@ -100,9 +87,6 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
 
             cv_inner = StratifiedKFold(n_splits=N_SPLITS, shuffle=True)
 
-            _, test_data_proc = preprocess(train_data, test_data)
-            train_data_np = train_data.to_numpy()
-
             search = GridSearchCV(estimator=pipeline,
                                   param_grid=param_grid,
                                   scoring='f1_weighted',
@@ -112,7 +96,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
                                   n_jobs=-1,
                                   verbose=3)
 
-            search.fit(train_data_np, train_target)
+            search.fit(train_data, train_target)
             row_grid_result = pd.DataFrame(search.cv_results_)
             row_grid_result['fold'] = fold
             row_grid_result['model'] = model_name
@@ -123,7 +107,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
             best_model = search.best_estimator_
             save_fold_model(fold, model_name, best_model)
 
-            acc, loss, f1_test = test_eval(fold, model_name, test_data_proc, test_target)
+            acc, loss, f1_test = test_eval(fold, model_name, test_data, test_target)
             outer_results.append(acc)
             outer_f1_results.append(f1_test)
             df_results = add_row_to_df_sk(model_name, fold, df_results, loss, acc, f1_test,
