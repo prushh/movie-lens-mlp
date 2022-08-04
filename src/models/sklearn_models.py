@@ -10,7 +10,7 @@ from imblearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import zero_one_loss, accuracy_score, f1_score
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
-from sklearn.preprocessing import MinMaxScaler, Normalizer
+from sklearn.preprocessing import MinMaxScaler
 
 from src.models.config import param_grid_model, best_param_grid_model
 from src.utils.const import NUM_BINS, MODEL_RESULTS_CSV, MODEL_RESULTS_DIR
@@ -18,7 +18,6 @@ from src.utils.util_models import add_row_to_df_sk
 
 
 def make_pipeline_sk(estimator, k_neighbors: int) -> Pipeline:
-
     features = [
         0,  # year
         1,  # title_length
@@ -131,7 +130,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
 
             if acc == max(outer_results):
                 filename = f'{model_name}.pkl'
-                filepath = os.path.join(MODEL_RESULTS_DIR, filename)
+                filepath = os.path.join(MODEL_RESULTS_DIR, model_name, filename)
                 pickle.dump(search.best_estimator_, open(filepath, 'wb'))
 
             print(f'[test] loss={loss:3f}, acc={acc:3f} ,f1-score={f1_test:3f}, cfg={search.best_params_}')

@@ -1,13 +1,10 @@
 import argparse
-import warnings
 
 from src.data.preprocessing import preprocessing
 from src.data.acquisition import retrieve_datasets
 from src.models.network.mlp import mlp
 from src.models.sklearn_models import fit_model
 from src.utils.util_models import fix_random
-
-warnings.filterwarnings('ignore', category=UserWarning)
 
 
 def main() -> int:

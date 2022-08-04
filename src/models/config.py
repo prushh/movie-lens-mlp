@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import torch.nn as nn
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
@@ -36,11 +35,6 @@ param_grid_nb = {
     'model__var_smoothing': np.logspace(0, -9, num=100)
 }
 
-param_grid_qda = {
-    'model__reg_param': [0.00001, 0.0001, 0.001, 0.01, 0.1],
-    'model__tol': [0.0001, 0.001, 0.01, 0.1],
-}
-
 param_grid_tree = {
     'model__criterion': ['gini', 'entropy'],
     'model__max_depth': np.arange(5, 20, 5)
@@ -61,8 +55,7 @@ param_grid_model = {
         ('svc', SVC(), param_grid_svc)
     ],
     'naive_bayes': [
-        ('gaussian_nb', GaussianNB(), param_grid_nb),
-        ('qda', QuadraticDiscriminantAnalysis(), param_grid_qda)
+        ('gaussian_nb', GaussianNB(), param_grid_nb)
     ]
 }
 
@@ -77,8 +70,7 @@ best_param_grid_model = {
         ('svc', SVC(), {'model__C': [100], 'model__gamma': [0.01], 'model__kernel': ['rbf']})
     ],
     'naive_bayes': [
-        ('gaussian_nb', GaussianNB(), {'model__var_smoothing': [1.873817422860383e-06]}),
-        ('qda', QuadraticDiscriminantAnalysis(), {'model__reg_param': [0.001], 'model__tol': [0.0001]})
+        ('gaussian_nb', GaussianNB(), {'model__var_smoothing': [1.873817422860383e-06]})
     ]
 }
 
