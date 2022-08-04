@@ -8,9 +8,8 @@ In order to predict the average rating of a film, the required analysis pipeline
     Data Acquisition $\rightarrow$ Data Pre-Processing $+$ Visualization $\rightarrow$ Modeling $\rightarrow$ \\ $\rightarrow$ Performance Analysis $+$ Visualization
 \end{center}
 As a result of the performance analysis, it was seen that SVM and MovieNet (MLP) performed better than the other models considered, thus succeeding in predicting the class to which a film belongs.
-
-\section{Future works}
-% Parallelizzazione parte di preprocessing (Dask)
-% Studio più approfondito di feature e tecniche di balancing
+Given the non-independence of the data characterising a film, it could be seen that GaussianNB failed to achieve good results.
+It would therefore have been useful to have independence between the data belonging to the dataset so as to probably achieve better performance.
+Finally, we would like to report an issue encountered during the implementation phase of the scikit-learn models, where the behaviour of the \textit{fit}, \textit{fit\_transform} and \textit{predict} methods using the imbalance-learn \textit{Pipeline} within the \textit{GridSearchCV} was unclear.
 
 \end{document}

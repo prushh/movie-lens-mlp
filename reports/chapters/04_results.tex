@@ -10,7 +10,7 @@ All f1-scores are accompanied by a defined interval thanks to the t-student, wit
 
 \section{Validation}
 The hyperparameters of the configurations with the best validation results are shown in Tables \ref{table:sklearn_model_best_conf} and \ref{table:torch_model_best_conf}.
-In particular, the hyper parameters that led the models to achieve the best results are shown.
+In particular, the hyperparameters that led the models to achieve the best results are shown.
 \begin{table}[!ht]
     \center
     \begin{tabular}{|l|l|}
@@ -23,8 +23,6 @@ In particular, the hyper parameters that led the models to achieve the best resu
         \hline
         \textit{GaussianNB}                & var\_smoothing: 1.873817422860383e-06                                                              \\
         \hline
-        \textit{QDA}                       & \begin{tabular}[c]{@{}l@{}}reg\_param: 1e-3\\ tol: 1e-4\end{tabular}                            \\
-        \hline % TODO: wait result
         \textit{SVM}                       & \begin{tabular}[c]{@{}l@{}}C: 100\\ gamma: 1e-2\\ kernel: 'rbf'\end{tabular}                       \\
         \hline
     \end{tabular}
@@ -63,15 +61,13 @@ The f1-score obtained by each model during the training and validation phase is 
         \cline{2-3} 
         \multicolumn{1}{|c|}{}                                & \multicolumn{2}{c|}{\textbf{f1-score (\%)}}                                       \\
         \hline
-        \textit{RandomForestClassifier}                       & \multicolumn{1}{c|}{96.3 $\pm$0.1}         & 75.5 $\pm$0.1                               \\
+        \textit{RandomForestClassifier}                       & \multicolumn{1}{c|}{96.2 $\pm$0.1}         & 75.3 $\pm$0.1                               \\
         \hline
-        \textit{DecisionTreeClassifier}                       & \multicolumn{1}{c|}{79.4 $\pm$0.4}        & 66 $\pm$0.8                                \\
+        \textit{DecisionTreeClassifier}                       & \multicolumn{1}{c|}{79.6 $\pm$0.6}        & 66.4 $\pm$0.1                                \\
         \hline
-        \textit{GaussianNB}                                   & \multicolumn{1}{c|}{51 $\pm$0.3}         & 45 $\pm$0.2                                \\
+        \textit{GaussianNB}                                   & \multicolumn{1}{c|}{51.1 $\pm$0.2}         & 45.3 $\pm$0.2                                \\
         \hline
-        \textit{QDA}                                          & \multicolumn{1}{c|}{97 $\pm$0.06}        & 49.6 $\pm$0.3                               \\
-        \hline %TODO: wait result
-        \textit{SVM}                                          & \multicolumn{1}{c|}{99.9 $\pm$0.001}       & 96.1 $\pm$0.09                               \\
+        \textit{SVM}                                          & \multicolumn{1}{c|}{97.6 $\pm$0.09}       & 82.8 $\pm$0.1                               \\
         \hline
         \textit{MovieNet (MLP)}                               & \multicolumn{1}{c|}{87.5 $\pm$0.1}         & 79.5 $\pm$0.08                               \\
         \hline
@@ -83,17 +79,19 @@ The f1-score obtained by each model during the training and validation phase is 
 \begin{figure}[!ht]
     \center
     \includegraphics[width=0.8\linewidth]{figures/train_val_plot.png}
-    \caption{Multiplebar plot that shows the train/val f1-score for each model.}
+    \caption{Multiple bar plot that shows the train/val f1-score for each model.}
     \label{fig:train_val_plot}
 \end{figure}
 \newpage
 
-It can be seen that SVM managed to achieve a higher f1 score in both training and validation.
+It can be seen that GaussianNB had more difficulties than the other models.
+In particular, low results were obtained in both the training and validation phases, which is probably due to the non-independence of the data.
+The other models, on the other hand, performed in line with expectations, with a validation value slightly lower than the train value.
 
 \section{Testing}
 The test phase is necessary to evaluate the performance of the model using samples that have never been taken.
 It can be seen in Table \ref{table:test_results} how SVM and MovieNet achieved the highest metrics with the lowest losses.
-Instead, probabilistic models are the ones that have obtained worse metrics.
+Instead, GaussianNB, as we expected from the validation results, is the model with the worst metrics.
 
 \begin{table}[!ht]
     \center
@@ -103,15 +101,13 @@ Instead, probabilistic models are the ones that have obtained worse metrics.
         \cline{2-3} 
         \multicolumn{1}{|c|}{}                                & \multicolumn{1}{c|}{\textbf{f1-score (\%)}} & \textbf{loss}  \\ 
         \hline
-        \textit{RandomForestClassifier}                       & \multicolumn{1}{c|}{75.7 $\pm$0.5}             & 0.242 \\
+        \textit{RandomForestClassifier}                       & \multicolumn{1}{c|}{75.8 $\pm$0.4}             & 0.241 \\
         \hline
-        \textit{DecisionTreeClassifier}                       & \multicolumn{1}{c|}{65.3 $\pm$0.9}                & 0.348  \\
+        \textit{DecisionTreeClassifier}                       & \multicolumn{1}{c|}{66.9 $\pm$0.6}                & 0.331  \\
         \hline
-        \textit{GaussianNB}                                   & \multicolumn{1}{c|}{7.4 $\pm$0.5}                & 0.837 \\
+        \textit{GaussianNB}                                   & \multicolumn{1}{c|}{45 $\pm$1.3}                & 0.549 \\
         \hline
-        \textit{QDA}                                          & \multicolumn{1}{c|}{14.3 $\pm$0.004}              & 0.693 \\
-        \hline % TODO: wait result
-        \textit{SVM}                                          & \multicolumn{1}{c|}{82.8 $\pm$0.4}              & 0.17  \\
+        \textit{SVM}                                          & \multicolumn{1}{c|}{82.8 $\pm$0.3}              & 0.171  \\
         \hline
         \textit{MovieNet (MLP)}                                     & \multicolumn{1}{c|}{85.9 $\pm$0.3}              & 0.36  \\ \hline
     \end{tabular}
@@ -125,10 +121,5 @@ Instead, probabilistic models are the ones that have obtained worse metrics.
     \caption{Multiplebar plot that shows the test f1-score for each model.}
     \label{fig:test_metric_plot}
 \end{figure}
-\newpage
-
-The reasons why the test results on the tree-based and naive bayes models are low could be related to the unbalance of the dataset as the test set contains the initial distribution of classes.
-The use of different test sets following cross validation did not affect the performance of the models.
-In fact, the confidence intervals are quite small, which means that the models were able to predict in the same way regardless of the test set.
 
 \end{document}

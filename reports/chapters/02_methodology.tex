@@ -220,7 +220,7 @@ It has been seen as the distribuition of these features are not Gaussian and for
 \end{figure}
 
 In order to have a greater reliability on the techniques to apply, a test function was created.
-This function uses the default version of the scikit models used in this project, which are: RandomForest, DecisionTree, GaussianNB, QDA and SVM.
+This function uses the default version of the scikit models used in this project, which are: RandomForest, DecisionTree, GaussianNB and SVM.
 Only the scikit models were used due to their ease of use, which is why the Neural Network does not appear in these tests.
 From the outcomes, some graphs were produced to better interpret the results.
 Thanks to this function, 3 configuration has tried:
@@ -305,11 +305,6 @@ The models specified in the assignments were used with the following hyperparame
     \item GaussianNB
     \begin{itemize}
         \item \textit{var\_smoothing}: logspace(0, -9, num=100)
-    \end{itemize}
-    \item Quadratic Discriminant Analysis (QDA)
-    \begin{itemize}
-        \item \textit{reg\_param}: $\{x = 10^z, z \in \mathbb{Z}|-5 \leq z \leq -1\}$
-        \item \textit{tol}: $\{x = 10^z, z \in \mathbb{Z}|-4 \leq z \leq -1\}$
     \end{itemize}
 \end{itemize}
 
