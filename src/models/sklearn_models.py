@@ -53,9 +53,9 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
     df_results = pd.DataFrame()
     df_grid_results = pd.DataFrame()
 
-    N_SPLITS = 5
+    n_splits = 5
 
-    cv_outer = StratifiedKFold(n_splits=N_SPLITS, shuffle=True)
+    cv_outer = StratifiedKFold(n_splits=n_splits, shuffle=True)
 
     if easy_params:
         random_conf = randrange(len(param_grid_model[model_group]))
@@ -85,7 +85,7 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
 
             pipeline = make_pipeline_sk(estimator, k_neighbors_approx)
 
-            cv_inner = StratifiedKFold(n_splits=N_SPLITS, shuffle=True)
+            cv_inner = StratifiedKFold(n_splits=n_splits, shuffle=True)
 
             search = GridSearchCV(estimator=pipeline,
                                   param_grid=param_grid,
@@ -116,14 +116,18 @@ def fit_model(df: pd.DataFrame, model_group: str, easy_params: bool, best_conf: 
                 os.mkdir(MODEL_RESULTS_DIR)
             if not os.path.exists(MODEL_RESULTS_CSV):
                 os.mkdir(MODEL_RESULTS_CSV)
+
+            prefix = ''
             if easy_params:
-                out_filename = f'best_out_{model_group}.csv'
+                prefix = 'easy_'
             elif best_conf:
-                out_filename = f'best_out_{model_group}.csv'
-            else:
-                out_filename = f'out_{model_group}.csv'
+                prefix = 'best_'
+
+            out_filename = f'{prefix}out_{model_group}.csv'
+            out_grid_filename = f'{prefix}out_grid_{model_group}.csv'
+
             df_results.to_csv(os.path.join(MODEL_RESULTS_CSV, out_filename), encoding='utf-8')
-            df_grid_results.to_csv(os.path.join(MODEL_RESULTS_CSV, f'out_grid_{model_group}.csv'), encoding='utf-8')
+            df_grid_results.to_csv(os.path.join(MODEL_RESULTS_CSV, out_grid_filename), encoding='utf-8')
 
             if acc == max(outer_results):
                 filename = f'{model_name}.pkl'
