@@ -17,9 +17,13 @@ pip install -r requirements.txt
 
 We recommend the use of a virtual environment such as [conda](https://www.anaconda.com/products/distribution), for example, for package installation and project execution.
 
+### Environment variable
+
+The file .env.example must be renamed to .env and the single variable TMDB_API_KEY must be set to the respective key of [TMDB](https://www.themoviedb.org/documentation/api). You only need to specify it if you want to download the TMDB dataset via api calls.
+
 ## Usage
 
-```bash
+```console
 python main.py -h
 
 usage: main.py model [--easy | --best]
@@ -35,6 +39,11 @@ options:
   -e, --easy            demo purpose, use only one random configuration for hyperparams
   -b, --best            use the best training configuration
 ```
+
+## Notebooks
+
+The notebooks contain fundamental project parts that have been implemented for greater understanding. In order to avoid errors, we recommend running the notebooks in alphabetical order.
+
 
 ## Report
 
