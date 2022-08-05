@@ -26,7 +26,7 @@ The file .env.example must be renamed to .env and the single variable TMDB_API_K
 ```console
 python main.py -h
 
-usage: main.py model [--easy | --best]
+usage: main.py model [--random | --best]
 
 Data Analytics project using MovieLens dataset.
 
@@ -36,7 +36,7 @@ positional arguments:
 
 options:
   -h, --help            show this help message and exit
-  -e, --easy            demo purpose, use only one random configuration for hyperparams
+  -r, --random          demo purpose, use only one random configuration for hyperparams
   -b, --best            use the best training configuration
 ```
 

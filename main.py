@@ -15,15 +15,15 @@ def main() -> int:
     final = preprocessing()
 
     if args.model == 'mlp':
-        mlp(final, args.easy, args.best)
+        mlp(final, args.random, args.best)
     else:
-        fit_model(final, args.model, args.easy, args.best)
+        fit_model(final, args.model, args.random, args.best)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Data Analytics project using MovieLens dataset.',
-        usage='%(prog)s model [--easy | --best]'
+        usage='%(prog)s model [--random | --best]'
     )
 
     parser.add_argument(
@@ -32,7 +32,7 @@ if __name__ == '__main__':
         help='the name of the model'
     )
     parser.add_argument(
-        '-e', '--easy', default=False,
+        '-r', '--random', default=False,
         action='store_true',
         help='demo purpose, use only one random configuration for hyperparams'
     )

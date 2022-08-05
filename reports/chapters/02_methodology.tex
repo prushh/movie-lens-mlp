@@ -44,6 +44,7 @@ Further information about the features usage and the cardinality of the datasets
 In this section, will be discussed the pre-process phase for each of the above presented datasets.
 In order to achieve a major clearity, the work on each dataset will be discussed in a specific subsection where the operation computed on them will be explained.
 At the beginning of each subsection the cardinality will be reported.
+\newpage
 
 \subsection*{Movies - movies.csv}
 Cardinality: $58098 \times 3$
@@ -155,7 +156,7 @@ Since for a classification task is interesting to know the informations about a 
 The first merge has been between movies and ratings because if a film doesn’t have the target feature there is no point to consider it.
 In addition, all films with no rating mean were discarded, resulting in a cardinality of $50157 \times 24$.
 From this point on, all the merges will be performed using the previously calculated dataset, so only the new dataset will be specified.
-The second merge considers tags dataset, where there was an important number of samples that hasn't a tag count.
+The second merge considers tags dataset, where there was an important number of samples that haven't a tag count.
 In this case, these samples were not discarded because they were considered as a film that generated no users interaction, so all missing values were filled with 0, resulting in a cardinality of $50157 \times 25$.
 The third merge introduces external resources where for each film there is a related sample, so the cardinality depends from the previous one, resulting $50157 \times 26$.
 The final merge introduces the genome dataset, where there is a large gap between the cardinality of this dataset and the previous one.
@@ -220,10 +221,10 @@ It has been seen as the distribuition of these features are not Gaussian and for
 \end{figure}
 
 In order to have a greater reliability on the techniques to apply, a test function was created.
-This function uses the default version of the scikit models used in this project, which are: RandomForest, DecisionTree, GaussianNB and SVM.
+This function uses the default version of the scikit models adopted in this project, which are: RandomForest, DecisionTree, GaussianNB and SVM.
 Only the scikit models were used due to their ease of use, which is why the Neural Network does not appear in these tests.
 From the outcomes, some graphs were produced to better interpret the results.
-Thanks to this function, 3 configuration has tried:
+Thanks to this function, 3 configurations have been tried:
 \begin{itemize}
     \item Minmax scaling with normalization of all non categorical features
     \item Minmax scaling
@@ -240,7 +241,6 @@ The results obtained are slightly lower than those obtained with the previous te
     \label{fig:plot_data_transformation}
 \end{figure}
 
-% TODO: manage position and dimensions of the figures
 \subsection*{Data balancing}
 The dataset from all previous stages is strongly unbalanced, as shown in Figure \ref{fig:unbalanced}.
 \begin{figure}[h]
@@ -277,6 +277,7 @@ For this reason it has been applied to the dataset and the dsitribution of sampl
     \caption{Class distribution  with SMOTE.}
     \label{fig:class_distribuition_balance}
 \end{figure}
+\newpage
 
 Due to the different behaviour of the neural network, it was decided to use one of the methods provided by the PyTorch framework to handle data imbalance:
 \begin{itemize}

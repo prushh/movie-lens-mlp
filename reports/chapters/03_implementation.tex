@@ -43,7 +43,7 @@ Since the PyTorch model doesn't support that class, it was needed to use itertoo
 It provides only a cartesian product of all configuration values and so it was necessary to define by hand cross validation and other flow controls.
 Since training a model with cross validation is time-consuming, it is given the possibility of specifying parameters via argparse as showed below, for a one-configuration run:
 \begin{center}
-    \texttt{main.py model [--easy | --best]}
+    \texttt{main.py model [--random | --best]}
 \end{center}
 
 The next two notebooks show a demo for each of the models used.
