@@ -69,7 +69,7 @@ def summary_statistics_model(df_score: pd.DataFrame, dict_: Dict, model: str, tr
     """
     if not train:
         print(
-            f"Best configuration {model} mean metrics:\n"
+            f"[test] Best configuration {model} mean metrics:\n"
             f"f1_score: {dict_['f1']['mu']} ±{dict_['f1']['t_student']}\n"
             f"loss: {dict_['loss']['mu']} ±{dict_['loss']['t_student']}\n"
             f"acc: {dict_['acc']['mu']} ±{dict_['acc']['t_student']}\n\n"
@@ -97,7 +97,7 @@ def summary_statistics_model(df_score: pd.DataFrame, dict_: Dict, model: str, tr
     else:
         if scikit:
             print(
-                f"Best configuration {model} mean metrics:\n"
+                f"[train - val] Best configuration  {model} mean metrics:\n"
                 f"train f1: {dict_['mean_f1_train']['mu']} ±{dict_['mean_f1_train']['t_student']}\n"
                 f"validation f1: {dict_['mean_f1_val']['mu']} ±{dict_['mean_f1_val']['t_student']}\n"
             )
@@ -110,7 +110,7 @@ def summary_statistics_model(df_score: pd.DataFrame, dict_: Dict, model: str, tr
             })
         else:
             print(
-                f"Best configuration {model} mean metrics:\n"
+                f"[train - val] Best configuration {model} mean metrics:\n"
                 f"train f1: {dict_['train_score']['mu']} ±{dict_['train_score']['t_student']}\n"
                 f"validation f1: {dict_['val_score']['mu']} ±{dict_['val_score']['t_student']}\n"
             )
