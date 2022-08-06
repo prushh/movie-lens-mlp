@@ -11,7 +11,7 @@ Project for the course "Data Analytics" of the University of Bologna, A.Y. 2021/
 
 To execute the script, [Python](https://www.python.org/) must be installed, and some external libraries must be downloaded and installed using the pip (or pip3) package manager:
 
-```bash
+```
 pip install -r requirements.txt
 ```
 
@@ -23,7 +23,7 @@ The file .env.example must be renamed to .env and the single variable TMDB_API_K
 
 ## Usage
 
-```console
+```
 python main.py -h
 
 usage: main.py model [--random | --best]
