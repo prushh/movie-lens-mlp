@@ -43,7 +43,7 @@ if __name__ == '__main__':
     )
 
     args = parser.parse_args()
-    if args.easy and args.best:
+    if args.random and args.best:
         parser.error('specify only --easy or --best, not both together')
 
     exit(main())
